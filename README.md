@@ -22,6 +22,7 @@ frontend/
 
 design-system/                 # librería de UI compartida
 shared/                        # memorias cross-proyecto (root ~/Dev)
+aws-tunnel/                    # sesiones en ~/Documents/AWS (tunnel + ops AWS)
 ```
 
 Cada carpeta conserva su propio `MEMORY.md` como índice interno.

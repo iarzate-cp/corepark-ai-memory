@@ -10,6 +10,7 @@
 - [Conteos verificados por grep](feedback_endpoint_counts.md) — Siempre usar grep sobre src/main para contar endpoints, no estimaciones
 - [Java 21 en ms-oauth-service](feedback_java_version_oauth.md) — Solo ms-oauth usa Java 21; el resto sigue en Java 17
 - [Acceso a Firebase vía ms-firebase-service](feedback_firebase_access_pattern.md) — Código NUEVO consume ms-firebase vía REST, no usa FirebaseDao directo
+- [DDL — substance sobre formato ceremonial](feedback_ddl_substance_over_format.md) — En DDLs priorizar Purpose/COMMENT/rationale sobre paridad de \set headers, numeración de rollback, etc.
 
 ## Documentación detallada por microservicio
 - [Docs ms-valet-service](docs_ms_valet_service.md) — Puerto 9000, ~115 endpoints, núcleo valet, EV, cupones, agregadores

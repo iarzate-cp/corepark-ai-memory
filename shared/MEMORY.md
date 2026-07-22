@@ -1,0 +1,4 @@
+- [User speaks Spanish](user_language.md) — Respond in Spanish (Mexican); technical terms stay in English
+- [From-scratch preference](feedback_from_scratch_preference.md) — On his own libraries, avoid wrapping third-party deps; build from spec
+- [Coding style rules](feedback_coding_style.md) — Functional/declarative, no ternaries, `.at()` over `arr[n]`, early returns, no classes for stateless logic
+- [Filekit project](project_filekit.md) — Zero-deps TS library for XLSX generation + blob download at `/Users/israel/Dev/filekit/`

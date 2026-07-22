@@ -1,0 +1,24 @@
+# Memory Index
+
+- [User — Israel Arzate](user_role.md) — Frontend dev at Corepark, communicates in Spanish, interested in open-sourcing Angular components
+- [Open-source library plan — Google Places Searcher](project_open_source_library.md) — Extract google-searcher as a standalone npm package for the Angular community
+- [Manager update copy — framing rules](feedback_manager_updates.md) — Include speed bump + identification + benefits; omit attribution (boss already knows)
+- [Docs style — Spanish, hubspot-integration.md convention](feedback_docs_style.md) — All docs/ files written in Spanish following existing structure
+- [Variable rate — ngx-mask bug (parche merged)](project_variable_rate_ngxmask_bug.md) — PR #44 merged; causa raíz arquitectónica sigue pendiente
+- [Variable rate — estado actual, UX propuesto y refactor pendiente](project_variable_rate_refactor.md) — Refactor NO implementado; 8 friction points (3 críticos a 50+ filas); generador bulk + virtual scroll + input inline propuestos
+- [Variable Bulk Rate — implementación + integración pendiente](project_variable_bulk_rate.md) — Componentes listos; rates-buttons e index revertidos por linter — necesitan re-integración antes del commit
+- [Rama principal es main, no master](feedback_main_branch.md) — master lleva años sin usarse; siempre branch off y PRs contra main
+- [Damage Config — estado actual en ambos proyectos](project_damage_config.md) — Dialog en backoffice (feature/damage-config) + página en commerce (/settings/damage-config, v3.3.0); URL cutover EV/Parking aplicado
+- [Vehicle Level Tag — PM-2648](project_vehicle_level_tag.md) — Feature completa en v1.23.0; branch en 74cde031; "Específico" pendiente traducir; cars se pasan del padre al dialog
+- [Tag dialog — cars vienen del padre](feedback_tag_dialog_cars.md) — No mover getCars adentro del dialog; TagDialogData.cars es intencional
+- [Trends — Group By selector pendiente de backend](project_trends_groupby.md) — Dropdown groupBy en Trends bloqueado esperando que backend acepte el parámetro en /reports/trends/data
+- [Garage Spot Uniqueness Toggle](project_garage_spot_uniqueness.md) — `enforceSpotSingleOccupancy` toggle en config de garage; branch feature/garage-spot-uniqueness-toggle, pendiente commit+PR
+- [frontend-guest-page — fix merge request-car](project_guest_page_request_car_fix.md) — Merge conflict develop resuelto; `!hasGuestProfile()` eliminado del template; commits pendientes
+- [Guest Profile — Add Car feature](project_guest_profile_add_car.md) — Dialog + service + integración listos en hotfix/guest-profile/add-car; pendiente commit+PR
+- [Bug — DELETE car-profile 500 en autos sin fotos](project_delete_car_500_bug.md) — Fix aplicado en rama fix/car-profile-delete-empty-photo-reel; commit+PR pendientes del usuario
+- [Validación — no borrar carro si es el único](project_single_car_validation.md) — Restricción front+back coordinada; diseño original posiblemente obsoleto con el nuevo add-car flow
+- [Git — no crear commits ni branches](feedback_no_git.md) — El usuario maneja git manualmente; Claude solo edita archivos
+- [URL setter interceptor + endpoints unificado](project_url_setter_interceptor.md) — Rama feature/interceptor/url-setter lista pero NO en producción; interceptor + endpoints.ts único reemplazan pathSetter/apiUrl/enums viejos
+- [cp-time-picker — panel en DS + time-field wrapper en backoffice](project_ds_time_picker.md) — Panel DS listo; wrapper local `time-field` (CVA + CDK overlay) creado; 5 forms migrados a 'HH:mm' string; build pasa; falta cp-time-input en DS, cp-date-picker, cp-date-range-input antes de eliminar nxt-pick-datetime
+- [Handoff URLs — defer to /reports/ convention](feedback_backend_handoff_url_paths.md) — Backend handoffs often use shorthand paths; prepend the sibling-endpoint prefix by default instead of copying verbatim
+- [Flag uncommitted edits loudly](feedback_flag_uncommitted_edits.md) — After Edit/Write under the "no git" rule, explicitly warn the change is uncommitted so it doesn't get bypassed in a merge/deploy

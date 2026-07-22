@@ -1,0 +1,22 @@
+# Memory Index
+
+- [User Profile](user_profile.md) — Israel Arzate, senior Angular dev at Corepark, prefers full autonomy, writes in Spanish
+- [Design System Architecture](project_design_system.md) — build pipeline, dist layout, ng-packagr quirks, rsync workflow for local dev
+- [ButtonDirective — SCSS Migration](project_button_directive.md) — full .cp-btn SCSS, simplified hostClass(), BEM class map, specificity notes
+- [styles.scss — Single Import Contract](project_styles_entry.md) — how tokens were merged into styles.scss, consumer usage, frontend-commerce current state
+- [Working Style Preferences](feedback_working_style.md) — autonomy grants, terse summaries, Spanish chat / English code
+- [Design System Technical Patterns](feedback_design_system_patterns.md) — no Tailwind in library, build:fix-paths requirement, rsync workflow, BEM prefix cp-*
+- [Repository Paths & Key Files](reference_repos.md) — absolute paths to the THREE repos: design-system, frontend-commerce, frontend-backoffice
+- [corepark-ui Component API](project_corepark_ui_components.md) — selector, inputs, outputs y comportamiento clave de cada componente/directiva
+- [corepark-ui Token System](project_corepark_ui_tokens.md) — definición completa de tokens SCSS (colores, spacing, tipografía, radius, shadows, z-index, grid)
+- [Pending Work](project_pending_work.md) — branches activos, cambios sin commit, tareas pendientes por repo (design-system: `develop`, backoffice: `refactor/ticket-log`)
+- [Commit Scope](feedback_commits.md) — solo commitear en el design system, nunca en el backoffice
+- [CDK Overlay Animated Panel Pattern](project_cdk_overlay_pattern.md) — enter/exit animations con ComponentRef + setTimeout + CSS classes
+- [Import Paths — @corepark/corepark-ui](feedback_import_paths.md) — usar siempre @corepark/corepark-ui, nunca subpaths de CLAUDE.md
+- [Backoffice Dialog Wrappers](feedback_backoffice_dialog_wrappers.md) — wrapper-dialog/dialog-wrapper NO migran a cp-dialog-content por lote; migrar dialog a dialog individualmente
+- [Backoffice Theme](feedback_backoffice_theme.md) — NO añadir data-theme="dark" a index.html; backoffice tiene diseño mixto claro/oscuro
+- [Date Picker Integration Plan](project_datepicker_integration.md) — migrar nxt-pick-datetime → cp-date-range-picker; sitios de uso, diferencias de API, bugs a corregir primero, conversión de tipos
+- [DateFilterButton — Componente Genérico](project_date_filter_button.md) — shared component CDK overlay + cp-date-range-picker; reemplaza MatDialog en 7 páginas de reportes; API, uso y qué se eliminó al migrar
+- [Módulos Feature Plan](project_modules_feature.md) — capa lib/modules/ completa; 5 módulos del Valet Dashboard construidos y con responsive design
+- [Repo Names — Commerce vs Backoffice](feedback_repo_names.md) — frontend-commerce ≠ frontend-backoffice; no confundirlos
+- [frontend-validation Token Namespace](feedback_frontend_validation_tokens.md) — usar --cp-ui-color-* no --color-bg/text-*; body es oscuro por normalizer.scss

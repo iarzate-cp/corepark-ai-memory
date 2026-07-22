@@ -11,6 +11,7 @@
 - [Java 21 en ms-oauth-service](feedback_java_version_oauth.md) — Solo ms-oauth usa Java 21; el resto sigue en Java 17
 - [Acceso a Firebase vía ms-firebase-service](feedback_firebase_access_pattern.md) — Código NUEVO consume ms-firebase vía REST, no usa FirebaseDao directo
 - [DDL — substance sobre formato ceremonial](feedback_ddl_substance_over_format.md) — En DDLs priorizar Purpose/COMMENT/rationale sobre paridad de \set headers, numeración de rollback, etc.
+- [Audit no debe bloquear operativa](feedback_audit_should_not_gate_operations.md) — JOINs a tablas de audit son LEFT por defecto; orphans se reparan vía UI existente, no con endpoint/DDL nuevos.
 
 ## Documentación detallada por microservicio
 - [Docs ms-valet-service](docs_ms_valet_service.md) — Puerto 9000, ~115 endpoints, núcleo valet, EV, cupones, agregadores

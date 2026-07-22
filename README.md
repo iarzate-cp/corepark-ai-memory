@@ -8,9 +8,10 @@ proyecto correspondiente bajo `~/.claude/projects/…/memory/`.
 
 ```
 backend/
-├── all/                       # memorias del root ~/Dev/Back-End (cross-microservicio)
-├── ms-backoffice-service/     # microservicio backoffice
-└── ddl-coupons/               # release DDL 2026-07-15 (COUPONS)
+├── all/                              # memorias del root ~/Dev/Back-End (cross-microservicio)
+├── ms-backoffice-service/            # microservicio backoffice
+├── ddl-coupons/                      # release DDL 2026-07-15 (COUPONS)
+└── ddl-coupon-request-backfill/      # release DDL 2026-07-22 (backfill CREATE)
 
 frontend/
 ├── backoffice/

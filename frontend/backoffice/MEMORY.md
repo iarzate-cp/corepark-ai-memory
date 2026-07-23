@@ -22,3 +22,10 @@
 - [cp-time-picker — panel en DS + time-field wrapper en backoffice](project_ds_time_picker.md) — Panel DS listo; wrapper local `time-field` (CVA + CDK overlay) creado; 5 forms migrados a 'HH:mm' string; build pasa; falta cp-time-input en DS, cp-date-picker, cp-date-range-input antes de eliminar nxt-pick-datetime
 - [Handoff URLs — defer to /reports/ convention](feedback_backend_handoff_url_paths.md) — Backend handoffs often use shorthand paths; prepend the sibling-endpoint prefix by default instead of copying verbatim
 - [Flag uncommitted edits loudly](feedback_flag_uncommitted_edits.md) — After Edit/Write under the "no git" rule, explicitly warn the change is uncommitted so it doesn't get bypassed in a merge/deploy
+- [operatorCompanyId — header, no body](project_operator_id_header_pattern.md) — Legacy interceptor injects operatorCompanyId into POST bodies; correct pattern is Operator-Id header only
+- [Activity by Rate Class — módulo unificado](project_activity_by_rate_class.md) — Reemplaza volume + check-in-out con 2 endpoints /reports/analytics/*; en branch feature/parking-volume-analytics
+- [Corepark Design System — repo local + package](reference_corepark_design_system.md) — Source en ~/Dev/design-system/; package @corepark/corepark-ui desde npm.pkg.github.com
+- [NotificationService — cómo cablearlo](reference_notification_service.md) — Toast DS: provideNotifications({position}) + show({type,title,description,duration}); patrones de copy
+- [Signals — computed > getter methods](feedback_signals_prefer_computed.md) — Valores derivados de signals van en computed(), no en métodos; excepción viewChild (no soporta #private)
+- [CP color tokens — usar --color-main-*](project_cp_color_tokens.md) — Teal brand en --color-main-*; --color-primary-* (azul) NO se usa en features nuevas
+- [Response envelope no es universal](feedback_response_envelope_varies.md) — CLAUDE.md dice {data,code,message} pero algunos endpoints spread payload al top level; verificar antes de unwrap

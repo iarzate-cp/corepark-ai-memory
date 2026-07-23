@@ -1,15 +1,17 @@
 ---
-name: Handoff URLs — defer to /reports/ (or sibling) convention
-description: When a backend handoff doc shows a relative-looking path, default to the codebase convention instead of copying the path literally
+name: Handoff URLs — ask, don't assume the prefix
+description: When a backend handoff shows a relative path, look at siblings AND ask if unsure — the /reports/ prefix has burned us twice
 type: feedback
-originSessionId: f07718db-6a66-4d7e-a6be-5f3c2a44ce61
+originSessionId: 85943526-dc15-4804-8e1b-d41f97bb9dcf
 ---
-When a backend handoff (HTML/PDF/Notion/etc.) gives a path for a new endpoint, do NOT copy it verbatim into `pathSetter(...)`. Handoff authors frequently write the *logical* path within their service (e.g. `POST /valet-analytics-report`), expecting the front to slot it into whatever prefix sibling endpoints already use.
+When a backend handoff (HTML/PDF/Notion/etc.) gives a path for a new endpoint, do NOT copy it verbatim into `pathSetter(...)`, and DO NOT guess. Look at sibling endpoints in the same domain, and if there's any ambiguity, ask the user.
 
-**Why:** Valet Analytics Report (id 18) handoff §3 wrote `POST /valet-analytics-report`. I implemented `pathSetter('/valet-analytics-report')` verbatim → resolved to `https://dev-web-71f618df0c78.corepark.com/valet-analytics-report` and 404'd. Real path is `/reports/valet-analytics-report` — same prefix every other endpoint in `reports-custom-one-time-service.ts` uses. I had even flagged the deviation in my response ("Si el path correcto fuera /reports/valet-analytics-report, dímelo y lo cambio — usé el literal del handoff") but still shipped the deviant version, costing a round-trip.
+**Why:**
+- **Incident 1 (2025-11-something):** Valet Analytics Report handoff wrote `POST /valet-analytics-report`. I used it verbatim → 404. Real path was `/reports/valet-analytics-report`.
+- **Incident 2 (2026-07-22):** Activity by Rate Class handoff wrote `POST /analytics/tickets/parking-location/activity`. Siblings in `employee-center.ts` and `locations.ts` used `/backoffice/*`, so I picked `/backoffice/analytics/...`. Wrong — the correct prefix for reports-service endpoints is `/reports/*`. User had to correct me.
 
-**How to apply:** Before writing `pathSetter('/<new-path>')`:
-1. Look at sibling methods in the same service (or same domain) for the URL prefix convention (`/reports/`, `/billing/`, `/operator/`, etc.).
-2. If 100% of siblings share a prefix and the handoff path doesn't, the handoff is almost certainly using shorthand → prepend the convention prefix.
-3. Mention the deviation briefly in the response so the user can correct if rare cases really do live outside the prefix, but ship the convention-aligned version by default.
-4. Only ask for confirmation when there are *competing* conventions (multiple prefixes used by sibling endpoints) and the handoff is ambiguous.
+**How to apply:**
+1. **Never copy verbatim.** Handoff authors write logical paths relative to their microservice, expecting the front to slot in the prefix.
+2. **Check siblings in the SAME microservice first.** If the artifact says `MS-REPORTS-SERVICE`, look at `trends.ts` and `dashboard.ts` (both use `/reports/*`) — not at `employee-center.ts` or `locations.ts` which use `/backoffice/*`. Different microservices, different prefixes.
+3. **If the microservice isn't obvious from the artifact, ASK.** The 30 seconds to confirm the prefix beats a round-trip with a 404.
+4. Mention the deviation in the response so the user can correct: "El artifact dice `/X/...` pero uso `/reports/X/...` por convención de sibling endpoints — dime si es otro prefijo."

@@ -1,63 +1,89 @@
 ---
-name: Activity by Rate Class — feature/parking-volume-analytics (5 commits ahead de main)
-description: Módulo unificado que reemplaza volume + check-in-out; v1 en review con QA/PO, restricción por operador ya aplicada
+name: Activity by Rate Class — dual-table redesign en feature/parking-volume-analytics
+description: Reemplaza charts por dos tablas simultáneas; granularity dropdown solo en series; hourly no toma granularity
 type: project
-originSessionId: 85943526-dc15-4804-8e1b-d41f97bb9dcf
+originSessionId: 5506e125-b5d9-4d50-a707-64609419d5d0
 ---
 Módulo `/analytics/activity-by-rate-class` que consume dos endpoints de `ms-reports-service`:
 
 - `POST /reports/analytics/tickets/parking-location/activity` — serie temporal (WEEK / DAY / HOUR); buckets con `{ periodStart, checkIns, checkOuts, avgCarsOnHand }`, cada métrica con `{ total, byRateClass: [{ rateClass, value }] }` (TRANSIENT / OVERNIGHT).
 - `POST /reports/analytics/tickets/parking-location/hourly-profile` — 24h del día típico sobre un rango; shape hour: `{ hour, avgCheckIns, avgCheckOuts, avgCarsOnHand }` con el mismo `{ total, byRateClass }`.
 
-Reemplazó dos páginas mock (`volume.ts` + `check-in-out.ts`) que compartían un `VolumeService` y un mock JSON de 1110 líneas — todo borrado.
+**Rediseño actual (post-migración de charts a tables):**
+- Dos cards **simultáneas** (no view-toggle): Volume by Rate Type (usa `/activity`) + Hourly Volume by Rate Type (usa `/hourly-profile`).
+- Rows fijos: Transient / Overnight / Total (Total en `--color-main-500` + bold).
+- Columns: buckets por granularity (series), 24 horas fijas (hourly).
+- Métrica mostrada: `checkIns.byRateClass` en series, `avgCheckIns.byRateClass` en hourly. `checkOuts` y `avgCarsOnHand` NO están visibles (perdidos vs diseño viejo).
+- Utils: `buildSeriesTable` / `buildHourlyTable` en `activity-by-rate-class-view-utils.ts`.
 
-**Estado actual (branch `feature/parking-volume-analytics`, 5 commits ahead de main, remoto existe):**
-- Página glue: `src/app/pages/main/analytics/activity-by-rate-class.ts` (`ActivityByRateClassPage`) — solo `<wrapper>` + `<activity-by-rate-class-view />` + reset del loader.
-- Shared component: `src/app/shared/components/activity-by-rate-class-view/` (component .ts + .html + .scss + view-utils.ts + index).
-- Service: `src/app/core/services/reports/activity-by-rate-class/activity-by-rate-class-service.ts` (barrel + folder — la convención "flat" de CLAUDE.md no se respetó aquí, pero es lo que hay).
-- Definitions: `src/app/core/definitions/analytics/activity-by-rate-class.d.ts`.
-- Enums: `activity-error-code.ts`, `activity-granularity.ts` (WEEK/DAY/HOUR), `rate-type.ts` (TRANSIENT/OVERNIGHT).
-- Endpoints en `core/http/endpoints/analytics.ts`, agregado a `endpoints.ts`.
-- i18n typed constants: `@i18n/analytics-i18n` — keys presentes en `assets/i18n/en.json` y `es.json`.
+**Controles:**
+- **Date range picker** (compartido) usa `cp-date-range-picker` del DS dentro de un CDK overlay via `cpDropdownTrigger`. Anchor a la derecha (`originX/overlayX: 'end'`).
+- **Granularity dropdown** SOLO en series card. Usa DS `[cpMenuTrigger]` + `<cp-menu>` + `<cp-menu-item>`. Opciones: Daily / Weekly / Hourly (mapea al enum `ActivityGranularity`).
+- **NO dropdown en hourly card** — quitado porque `/hourly-profile` no toma granularity, la UI antes engañaba al usuario.
+- **NO view toggle, NO breakdown toggle** — obsoletos con el layout dual.
 
-**Restricción por operador (commit `3d14700b`, post-snapshot anterior):**
-- Guard: `core/guards/activity-by-rate-class/activity-by-rate-class.guard.ts` — usa `toObservable(operatorDataState.operatorCompanyId)` + `canAccessActivityByRateClass`; redirige a `/analytics/trend` si no aplica.
-- Util predicate: `core/utils/activity-by-rate-class-access.ts` — `!environment.production` → true; en prod solo `ProductionOperators.CorePark` (1) y `SecureParking` (2).
-- Nav filter: `main-layout-nav.routes.ts::getAppRoutes(operatorCompanyId)` — remueve la entrada del urlTree de Analytics si el operador no aplica (defense-in-depth junto al guard).
-- Wire-up: `app.routes.ts` aplica `canActivate: [activityByRateClassGuard]` en el path `analytics/activity-by-rate-class`.
+**Reactive pattern crítico (worth remembering):**
+- `#range` signal contiene el rango CRUDO que el usuario picó. NO se normaliza al aplicar ni al cambiar granularity.
+- `#activityRequest` computed normaliza el range localmente antes de mandarlo (`normalizeRangeForGranularity`). Depende de `#range` + `#seriesChoice` + `#locationId`.
+- `#hourlyRequest` computed usa `#range` sin modificar. Depende SOLO de `#range` + `#locationId`.
+- Consecuencia deseada:
+  - Primera carga (locationId resuelve): ambos endpoints.
+  - Cambio de fecha en picker: ambos endpoints.
+  - Cambio de granularity: **solo `/activity`** (hourly no refetch porque su computed no depende de `#seriesChoice`).
+- Implementación anterior mutaba `#range` en `onSeriesChoiceChange`, causando refetch spurio de hourly.
 
-**Contrato HTTP verificado:**
+**Contrato HTTP (verificado, sin cambios desde v1):**
 - Response envelope FLAT: `{ code, message, granularity, buckets }` (activity) / `{ code, message, dayCount, hours }` (hourly). NO `{ data, code, message }`. Ver `feedback_response_envelope_varies.md`.
 - Headers manuales en el service: `Operator-Id` + `Location-Id` (no en body). `getActivity` / `getHourlyProfile` retornan `EMPTY` si falta operator o location.
 - Interceptor legacy tiene `/reports/analytics/` en `EXCLUDED_URLS` para no inyectar `operatorCompanyId` al body. Ver `project_operator_id_header_pattern.md`.
 
-**Reglas del backend enforzadas en el frontend (`normalizeRangeForGranularity`):**
+**Reglas del backend enforzadas en `normalizeRangeForGranularity`:**
 - WEEK: `startOf('week')` a `endOf('week').startOf('day')` — semanas ISO completas.
 - HOUR: `start === end`, se colapsa a un solo día.
 - DAY: `startOf('day')` en ambos endpoints.
-- `onGranularityChange` SIEMPRE resetea al rango de la semana actual normalizado — decisión intencional para evitar rangos inválidos al cambiar granularidad.
+- La normalización SOLO se aplica al construir el request de `/activity` (dentro del computed). No muta `#range`.
 
-**Patrones internos del view component (worth remembering):**
-- Request derivation: `#activityRequest` y `#hourlyRequest` son `computed(...)` que retornan `null` cuando las precondiciones no se cumplen (view mode incorrecto, sin location, sin range). El pipeline es `toObservable(computed).pipe(filter(non-null), switchMap(service.get))` + `toSignal`. Así, cualquier cambio en dependencias (location, range, granularity, view) re-dispara la request correcta sin lógica manual.
-- Notificaciones: `effect() { untracked(() => this.#notifySeriesUpdated(...)) }` para que el toast no cree dependencias reactivas.
-- Toasts vienen de `NotificationService` de `@corepark/corepark-ui`, no de Angular Material snackbar (CLAUDE.md queda desactualizado en este punto).
-- Chart component: usa `dashboard-trend-chart` local (max 2 series) — de ahí el ítem "migrar a `LineChartComponent` de corepark-ui" en el backlog v2.
+**Restricción por operador (commit `3d14700b`, sin cambios):**
+- Guard: `core/guards/activity-by-rate-class/activity-by-rate-class.guard.ts` — usa `toObservable(operatorDataState.operatorCompanyId)` + `canAccessActivityByRateClass`.
+- Predicate: `core/utils/activity-by-rate-class-access.ts` — `!environment.production` → true; en prod solo `ProductionOperators.CorePark` (1) y `SecureParking` (2).
+- Nav filter: `main-layout-nav.routes.ts::getAppRoutes(operatorCompanyId)`.
+- Wire-up: `app.routes.ts` aplica `canActivate: [activityByRateClassGuard]`.
 
-**Breakdown modes:**
-- `totals`: 2 charts (check-in vs check-out combinados, avg cars solo).
-- `byRateClass`: 3 charts (checkIns, checkOuts, avgCarsOnHand) cada uno con transient vs overnight.
+**Animaciones (Angular Animations, no CSS):**
+- Trigger `rangePanelFade` en el component metadata.
+- `:enter` — opacity 0→1 + translateY(-4px → 0), 140ms ease-out.
+- `:leave` — reverso, 120ms ease-in.
+- Aplicado a un `<div @rangePanelFade>` DENTRO del `<ng-template>` del picker (el CDK crea un embedded view via TemplatePortal, así Angular detecta el `:enter`/`:leave`).
 
-**Pending para v1.1 después de feedback QA/PO:**
+**Extensión al shared `CpDropdownTriggerDirective` (nueva):**
+- Input `cpDropdownExitDelay = input(0)` (default 0 = backwards-compat).
+- En `close()`: `detach()` síncrono (dispara `:leave`), luego `setTimeout(dispose, delay)` para dar tiempo a la animación de Angular antes de matar el pane host del CDK. Sin este delay, `dispose()` sync mata el DOM antes de que la animación empiece.
+- Consumido por activity-by-rate-class con `[cpDropdownExitDelay]="120"` matcheando la duración del `:leave`.
+
+**DS components importados desde `@corepark/corepark-ui`:**
+- `ButtonDirective` (`[cpButton]`) — para el trigger del date picker (`variant="secondary" size="sm"`). Trigger del granularity dropdown NO usa cpButton (variant `text` es todo teal; el mock quería texto oscuro + caret teal — plain button).
+- `DateRangePickerComponent` (`<cp-date-range-picker>`).
+- `NotificationService`.
+- `CpMenuComponent` / `CpMenuItemComponent` / `CpMenuTriggerDirective`.
+
+**Layout / SCSS (dueño: usuario, no tocar sin pedirlo):**
+- `:host` — flex column, gap 1rem, width 100%.
+- `header` — flex row, justify-end (donde vive el date picker trigger).
+- `.activity-by-rate-class-table-container` — flex column, gap 1.5rem, width 100%, padding 2rem, border-radius 1rem, background white, box-shadow.
+- `.activity-view__card-header` — flex row space-between, width 100%. `<cp-menu>` DEBE estar fuera del header (sibling), no adentro, o rompe el space-between.
+- Tabla: minimal styling, headers en `--color-grey-300`, cells en `--color-grey-500`, `tbody tr { border-top: 1px solid --color-grey-100 }`, fila `--total` en `--color-main-500` + bold.
+
+**Mock deviations rechazadas (ver `feedback_mock_discipline.md`):**
+- AM/PM toggle: nunca implementado, sin backing.
+- Monthly granularity: enum del backend no tiene MONTH.
+- Custom granularity: semantic ambigua (ya hay date picker).
+- Dropdown en hourly card: removido (endpoint no toma granularity).
+
+**Pending:**
+- Métrica selector (checkOuts, avgCarsOnHand — hoy invisible).
 - Tests unitarios de `activity-by-rate-class-view-utils.ts` (bloqueador de convención CLAUDE.md).
-- `docs/activity-by-rate-class.md` en español (convención hubspot-integration.md).
-- Clamping proactivo de rango por granularidad usando `maxDays` del picker (evita `INVALID-DATE-RANGE` 400).
-- Icono real (Tabler) en el trigger del picker en lugar del `▾` de texto.
-- `aria-haspopup="dialog"` + `aria-expanded` en el trigger del dropdown.
-- Chart tooltips con `tooltipData` contextual.
-- QA en browser con data no-cero (todo lo probado tuvo checkIns/checkOuts = 0).
-
-**Iteración v2 (backlog):**
-- URL query params para rango/granularidad/vista (shareable links).
-- Filtro por rate class específico (solo TRANSIENT / solo OVERNIGHT).
-- Migrar de `dashboard-trend-chart` local a `LineChartComponent` de corepark-ui (soporta >2 series nativas).
-- Presets del picker: "Últimos 30 días", etc.
+- `docs/activity-by-rate-class.md` en español.
+- Icono real (Tabler) en trigger del picker en lugar de `▾`.
+- `aria-haspopup="menu"` + `aria-expanded` en trigger del granularity dropdown.
+- QA en browser con data no-cero.
+- Migrar `NotificationService` como default sobre Angular Material snackbar (CLAUDE.md queda desactualizado aquí).

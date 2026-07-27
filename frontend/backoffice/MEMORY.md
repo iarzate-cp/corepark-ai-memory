@@ -23,7 +23,9 @@
 - [Handoff URLs — defer to /reports/ convention](feedback_backend_handoff_url_paths.md) — Backend handoffs often use shorthand paths; prepend the sibling-endpoint prefix by default instead of copying verbatim
 - [Flag uncommitted edits loudly](feedback_flag_uncommitted_edits.md) — After Edit/Write under the "no git" rule, explicitly warn the change is uncommitted so it doesn't get bypassed in a merge/deploy
 - [operatorCompanyId — header, no body](project_operator_id_header_pattern.md) — Legacy interceptor injects operatorCompanyId into POST bodies; correct pattern is Operator-Id header only
-- [Activity by Rate Class — módulo unificado](project_activity_by_rate_class.md) — Reemplaza volume + check-in-out con 2 endpoints /reports/analytics/*; en branch feature/parking-volume-analytics
+- [Activity by Rate Class — módulo unificado](project_activity_by_rate_class.md) — v1 en branch feature/parking-volume-analytics (5 commits ahead); operador-gating aplicado, esperando QA/PO
+- [Feature gating por operador — guard + nav filter](feedback_feature_gating_pattern.md) — Patrón de 2 capas con predicate único + bypass en no-prod; template en activity-by-rate-class
+- [corepark-ai-memory = fuente de verdad](feedback_memory_source_of_truth.md) — Toda memoria se escribe primero aquí; el auto-memory local es mirror para carga en sesión
 - [Corepark Design System — repo local + package](reference_corepark_design_system.md) — Source en ~/Dev/design-system/; package @corepark/corepark-ui desde npm.pkg.github.com
 - [NotificationService — cómo cablearlo](reference_notification_service.md) — Toast DS: provideNotifications({position}) + show({type,title,description,duration}); patrones de copy
 - [Signals — computed > getter methods](feedback_signals_prefer_computed.md) — Valores derivados de signals van en computed(), no en métodos; excepción viewChild (no soporta #private)

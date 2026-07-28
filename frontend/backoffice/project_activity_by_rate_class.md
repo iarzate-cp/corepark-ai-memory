@@ -9,6 +9,11 @@ Módulo `/analytics/activity-by-rate-class` que consume dos endpoints de `ms-rep
 - `POST /reports/analytics/tickets/parking-location/activity` — serie temporal (WEEK / DAY / HOUR); buckets con `{ periodStart, checkIns, checkOuts, avgCarsOnHand }`, cada métrica con `{ total, byRateClass: [{ rateClass, value }] }` (TRANSIENT / OVERNIGHT).
 - `POST /reports/analytics/tickets/parking-location/hourly-profile` — 24h del día típico sobre un rango; shape hour: `{ hour, avgCheckIns, avgCheckOuts, avgCarsOnHand }` con el mismo `{ total, byRateClass }`.
 
+**Naming divergence (importante):**
+- Nav label mostrado al usuario: **"Volume by Rate Type"** / **"Volumen por Tipo de Tarifa"** (renombrado en commit `3bcc49af` por instrucción externa).
+- Todo el código (ruta `/analytics/activity-by-rate-class`, archivos, clases, i18n key `ACTIVITY_BY_RATE_CLASS`, service `ActivityByRateClassService`) sigue con el nombre viejo. No renombramos código para no romper deep-links, bookmarks ni git blame.
+- Casualmente, el título del card superior interno también se llama "Volume by Rate Type" (redundancia visual: nav label == card title). Si el usuario final se queja, considerar cambiar el card title interno para diferenciarlo.
+
 **Rediseño actual (post-migración de charts a tables):**
 - Dos cards **simultáneas** (no view-toggle): Volume by Rate Type (usa `/activity`) + Hourly Volume by Rate Type (usa `/hourly-profile`).
 - Rows fijos: Transient / Overnight / Total (Total en `--color-main-500` + bold).
@@ -43,11 +48,12 @@ Módulo `/analytics/activity-by-rate-class` que consume dos endpoints de `ms-rep
 - DAY: `startOf('day')` en ambos endpoints.
 - La normalización SOLO se aplica al construir el request de `/activity` (dentro del computed). No muta `#range`.
 
-**Restricción por operador (commit `3d14700b`, sin cambios):**
+**Restricción por operador (commit `3d14700b`, ampliada en `3bcc49af`):**
 - Guard: `core/guards/activity-by-rate-class/activity-by-rate-class.guard.ts` — usa `toObservable(operatorDataState.operatorCompanyId)` + `canAccessActivityByRateClass`.
-- Predicate: `core/utils/activity-by-rate-class-access.ts` — `!environment.production` → true; en prod solo `ProductionOperators.CorePark` (1) y `SecureParking` (2).
+- Predicate: `core/utils/activity-by-rate-class-access.ts` — `!environment.production` → true; en prod solo `ProductionOperators.CorePark` (1), `SecureParking` (2) y `ChateauMarmount` (286).
 - Nav filter: `main-layout-nav.routes.ts::getAppRoutes(operatorCompanyId)`.
 - Wire-up: `app.routes.ts` aplica `canActivate: [activityByRateClassGuard]`.
+- Para habilitar un operador nuevo en prod: agregar la entry al enum `ProductionOperators` (si aún no está) + push al array `ALLOWED_OPERATORS`. Ningún otro cambio necesario (guard + nav consumen el predicate).
 
 **Animaciones (Angular Animations, no CSS):**
 - Trigger `rangePanelFade` en el component metadata.

@@ -24,6 +24,10 @@ Branch: `feature/filter-monitoring-by-station`. Se añadió un `mat-menu` en la 
 
 - **Solo se listan stations activas en el menú** (`deactivatedAt === null`), pero el filtro por UUID funciona incluso si la station fue desactivada después de asignarse a un ticket vivo.
 
+- **Si solo hay 1 station activa, se renderiza como texto plano sin dropdown** (agregado en `feature/vms-kanban-redesign`, 2026-07-28).
+  - **Why:** evitar que el operador vea un menú vacío/inútil y se pregunte "por qué tengo un dropdown aquí si no puedo cambiar de station". Mejor comunicar explícitamente "estás en esta station y no tienes otras opciones".
+  - **How to apply:** la condición vive en el template del `station-filter`. Si en el futuro se agrega concepto de "todas las stations" (aunque hoy no aplica), la regla probablemente cambie.
+
 ## Archivos clave
 
 - Filtro: `shared/components/station-filter/` (mat-menu + trigger)

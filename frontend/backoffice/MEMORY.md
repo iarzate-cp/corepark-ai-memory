@@ -32,3 +32,5 @@
 - [Signals — computed > getter methods](feedback_signals_prefer_computed.md) — Valores derivados de signals van en computed(), no en métodos; excepción viewChild (no soporta #private)
 - [CP color tokens — usar --color-main-*](project_cp_color_tokens.md) — Teal brand en --color-main-*; --color-primary-* (azul) NO se usa en features nuevas
 - [Response envelope no es universal](feedback_response_envelope_varies.md) — CLAUDE.md dice {data,code,message} pero algunos endpoints spread payload al top level; verificar antes de unwrap
+- [CatalogueState.init() puede ser null](feedback_catalogue_state_nullability.md) — Pipes/computed que consumen init() deben guardar contra null antes de destructurar; caso conocido: CodePhoneNumberPipe reventando en TicketLogTableComponent
+- [Damage photos — filename convention](project_damage_image_filename.md) — S3 `IMG_{ticket}_yyyy-MM-dd-HH-mm-ss-SSS` con hora local del dispositivo; pipe `damageImageDate` lo formatea con fallback a lastModified

@@ -1,6 +1,6 @@
 ---
 name: Feature — Stripe Integration (branch feature/stripe-integration)
-description: Fourth payment gateway on the guest page. Two flows on same branch — (1) pay-at-checkout (PaymentIntent, 2026-07-14) and (2) card-on-file "Unlock your valet pass" gate (SetupIntent, 2026-07-23, frontend done, backend pending).
+description: Fourth payment gateway on the guest page. Two flows on same branch — (1) pay-at-checkout (PaymentIntent, 2026-07-14) and (2) card-on-file "Unlock your valet pass" gate (SetupIntent, 2026-07-23, frontend fully wired end-to-end against real backend endpoint).
 type: project
 originSessionId: 867d223b-0e43-40dd-afc5-3cd8b73f7e0d
 ---
@@ -43,7 +43,7 @@ Branch: `feature/stripe-integration`. Fourth payment gateway added to `PaymentGa
 
 # Card-on-file "Unlock your valet pass" (2026-07-23)
 
-Second flow on the same branch. Same product context (Stripe, Connect, Overnight tickets) but a different Stripe API: **SetupIntent** to save a `PaymentMethod` up-front, so backend can charge off-session later. Frontend is fully built; **backend endpoint that creates the SetupIntent is still pending** — the Payment Element / confirmSetup wiring is the last mile.
+Second flow on the same branch. Same product context (Stripe, Connect, Overnight tickets) but a different Stripe API: **SetupIntent** to save a `PaymentMethod` up-front, so backend can charge off-session later. Fully wired end-to-end against the real backend endpoint (2026-07-23 pm).
 
 ## Contract with backend
 
@@ -58,7 +58,18 @@ Second flow on the same branch. Same product context (Stripe, Connect, Overnight
   }
   ```
   Cache-Control: `no-store`. **Never errors** for ineligible tickets — just returns `eligible: false` with a reason.
-- **Setup endpoint (still pending on backend):** must accept `{ ticket }` and return `{ clientSecret, publishableKey, accountId }` (same Connect tuple as `get-parameters`) so the frontend can mount a Payment Element in `mode: 'setup'` and call `stripe.confirmSetup()`. Once Apple/Google Pay wallet enablement is finished on connected accounts, the Payment Element renders wallets automatically.
+- **Setup endpoint (implemented):** `POST /payment/stripe/web/card-on-file` with `Operator-Id` + `Location-Id` headers. Body `{ ticket, consentTextVersion }`. Response envelope `{ code, data }`:
+  ```json
+  {
+    "clientSecret": "seti_..._secret_...",
+    "setupIntentId": "seti_...",
+    "cardOnFileReference": "uuid",
+    "publishableKey": "pk_live_...",
+    "accountId": "acct_..." | null
+  }
+  ```
+  Same Connect pattern as `get-parameters`: type 1 returns CorePark pk + operator's connected `accountId`; **type 2 returns CLIENT platform's pk and `accountId: null`** (so `loadStripe` must pass `stripeAccount` only when it's non-null). `consentTextVersion` is a required audit trail — card networks require explicit consent for off-session reuse, and the guest must have seen the corresponding copy version.
+- **Self-healing POST:** re-POSTing for the same ticket cancels the previous PENDING SetupIntent and replaces the record. Useful for PENDING re-entry.
 - **Eligibility rules (backend enforced):** ticket OPEN + Overnight rate + valet-collected (not partner/PMS) + location connected to Stripe. Reasons enum: `TICKET_NOT_FOUND | NOT_OVERNIGHT_RATE | PARTNER_COLLECTED | GATEWAY_NOT_CONFIGURED`.
 - **PENDING reconciliation:** every GET reconciles against Stripe. After a `confirmSetup` we re-consult the GET; the read authoritatively flips `hasActiveCardOnFile` (no webhook dependency for UI). On re-entry with `PENDING`, we offer the form again — new POST replaces the stale record.
 
@@ -83,16 +94,101 @@ Computed in `StripeCardOnFileState`:
 
 ### Types & enums
 - `core/models/enums/stripe.ts` — added `CardOnFileStatus` (`Active`, `Pending`) and `StripeIneligibleReason` (four values above)
-- `core/models/definitions/stripe.ts` — added `StripeCardDisplay`, `StripeCardOnFile`, `StripeCardOnFileResponse`
+- `core/models/definitions/stripe.ts` — added `StripeCardDisplay`, `StripeCardOnFile`, `StripeCardOnFileResponse`, `StripeCofSetupRequest`, `StripeCofSetup`, `StripeCofSetupResponse`
 
 ### Service
-- `core/services/payments.ts` — `stripeCardOnFile(ticket: string)` uses `HttpRoutes.StripeCardOnFile` + `ticketInfoState.headers()` + `{ params: { ticket } }`, `.pipe(map(r => r.data))`
+- `core/services/payments.ts`:
+  - `stripeCardOnFile(ticket: string)` — GET, uses `HttpRoutes.StripeCardOnFile` + `ticketInfoState.headers()` + `{ params: { ticket } }`, `.pipe(map(r => r.data))`. Also used for post-confirmSetup polling.
+  - `stripeCofSetup(ticket: string, consentTextVersion: string)` — POST, same `HttpRoutes.StripeCardOnFile` entry (path is shared, only method differs), body `{ ticket, consentTextVersion }`, headers from `ticketInfoState.headers()`, returns `StripeCofSetup` (clientSecret/setupIntentId/cardOnFileReference/publishableKey/accountId).
+
+### Setup + confirm + polling flow (implemented in `unlock-valet-pass.component.ts`)
+On component `ngOnInit`:
+1. `stripeCofSetup(ticket, 'cof-consent-v1')` fires.
+2. On success → `loadStripe(publishableKey, accountId ? { stripeAccount: accountId } : undefined)` — nullable `accountId` MUST be handled (type 2 connection returns null).
+3. `stripe.elements({ clientSecret })` + `create('payment')` + `mount(#paymentElement)`. `ready` event flips `isElementReady` → CTA enables (assuming consent already ticked).
+
+**Consent checkbox (2026-07-28):** `hasConsent = signal(false)` gates the CTA — button stays disabled until the user ticks a checkbox rendered above it (native `<input type="checkbox">` inside a `<label>`, outside the Stripe iframe as it must be). `onSaveCard` early-returns if `!hasConsent()` as belt-and-suspenders. See "Consent gate — known limitation" below for the compliance gap this leaves open.
+
+On "Save card" click:
+4. `stripe.confirmSetup({ elements, confirmParams: { return_url: window.location.href }, redirect: 'if_required' })`.
+5. On `setupIntent.status === 'succeeded'` → start polling:
+   - `race(interval(1000).pipe(switchMap → GET card-on-file, filter hasActiveCardOnFile, take(1)), timer(10_000).pipe(map(() => null)))`.
+   - On hit → set `StripeCardOnFileState.cardOnFile` → matrix computeds flip, gate closes reactively, ticket UI + `<stripe-saved-card>` render.
+   - On 10s timeout → snackbar "Confirmation is taking longer than usual. Please refresh in a moment." (backend webhook may still land later; user refresh resolves).
+
+Payment Element `create('payment', options)` config (2026-07-28 revision — `fields.billingDetails` removed to keep Stripe's `auto` default):
+```ts
+elements.create('payment', {
+  layout: { type: 'tabs', defaultCollapsed: false },
+  terms: { card: 'never', applePay: 'never', googlePay: 'never' }, // our own consent copy renders below
+  wallets: { applePay: 'auto', googlePay: 'auto' },
+})
+```
+Previously carried `fields: { billingDetails: { address: { country: 'never', postalCode: 'auto' } } }`. That opt-out required us to supply `country` in `confirmParams.payment_method_data.billing_details.address.country`, which the backend doesn't expose. Switching to `if_required` was suggested by Stripe support but "potentially impacts authorization rates" and can drive higher network fees on cost-plus plans. Default `auto` optimizes both and requires no override — see `project_stripe_billing_details.md`.
+
+Constants live at the top of the component file:
+```ts
+const COF_CONSENT_VERSION = 'cof-consent-v1'
+const POLL_INTERVAL_MS = 1000
+const POLL_TIMEOUT_MS = 10000
+```
+
+### Error handling
+Backend does not expose stable error codes for this endpoint (only HTTP 400/404/504 with generic bodies), so the FE shows generic snackbar messages via `#showError()`. If backend later adds a `HttpErrorStripeCofCodes` enum, wire a specific-message map inside `#initSetup` and `onSaveCard`.
+
+**`confirmSetup` call shape (2026-07-28 revision — return_url + real error surfaced):**
+```ts
+this.#stripe.confirmSetup({
+  elements: this.#elements,
+  confirmParams: { return_url: window.location.href },
+  redirect: 'if_required',
+})
+  .then((result) => {
+    if (result.error) {
+      if (result.error.type !== 'validation_error') {
+        this.#showError(result.error.message ?? 'Could not save the card. Please try again.')
+      }
+      this.isSubmitting.set(false)
+      return
+    }
+    // ... setupIntent.status === 'succeeded' branch
+  })
+  .catch((error: { message?: string }) => {
+    this.#showError(error?.message ?? 'Could not save the card. Please try again.')
+    this.isSubmitting.set(false)
+  })
+```
+Rules:
+- `confirmParams.return_url` **is required** — even with `redirect: 'if_required'`, Link and 3DS trigger a redirect and Stripe throws without it. Silent failure otherwise.
+- The Payment Element already renders inline red errors under each field for `validation_error` (empty/invalid number, expired card, etc.) — showing a snackbar on top is redundant and noisy. Only `card_error` / `api_error` / `api_connection_error` warrant a snackbar.
+- In the `.catch`, surface `error.message` from Stripe if present; the generic fallback hid the real cause during debugging. Same principle applies to any future `confirmPayment`-style call.
+
+### Backend gotcha — Bank tab + Link form can't be disabled from FE
+When the connected account has `us_bank_account` and `link` payment methods enabled, the Payment Element renders:
+- A **"Banco" tab** next to "Tarjeta" (with a "USD 5" badge — the ACH minimum).
+- A full **Link signup form** (email / phone / full name + "Condiciones y Política de privacidad" link) injected inside the card tab.
+
+**Neither is disableable from FE when using `stripe.elements({ clientSecret })` mode.** `wallets` in `create('payment', ...)` only exposes `applePay` and `googlePay` — no `link` key. `paymentMethodTypes` on elements-level is deferred-intent-only.
+
+**Fix must happen on backend when creating the SetupIntent:**
+```python
+stripe.SetupIntent.create(
+    customer=customer_id,
+    payment_method_types=["card"],  # explicit — hides Bank tab AND Link form
+    usage="off_session",
+    ...
+)
+```
+Alternatively, disable Link + US bank in the connected account Dashboard settings — but per-request `payment_method_types=["card"]` is cleaner.
+
+**Do NOT migrate to Deferred Intent flow just to solve this** — big rewrite, breaks the pattern shared with `stripe-payment.component.ts` (pay-at-checkout). Backend fix is one line.
 
 ### Components
-- **`shared/components/unlock-valet-pass/`** — full-page card:
+- **`shared/components/unlock-valet-pass/`** — full-page card, fully wired against Stripe:
   - **Dual-logo header** ported from `feature/guest-vehicle-info-edit`: grid `1fr auto 1fr` (partner logo | white separator | Corepark), skeleton shimmer while S3 HEAD is in flight, `--solo` modifier when resolved without partner logo (collapses to Corepark centered). Fetches via `HeaderImageService.getImage()` in `ngOnInit`.
-  - Ticket ticket-badge (`#6012`), title/subtitle, black **"Pay with G Pay"** button (colored Google G inline SVG), `or enter manually` divider, static Card number / MM/YY / CVV inputs (with CVV `?` help), teal `ADD CARD` CTA (disabled), footer `<lock-icon /> Encrypted and processed securely`.
-  - The static form is a **visual placeholder** for the Stripe Payment Element that will mount in `mode: 'setup'` once the setup endpoint exists. Same `<div #paymentElement>` slot pattern as `stripe-payment.component.ts`.
+  - Ticket badge (`#6012`), title/subtitle, `<div #paymentElement>` slot (with shimmer skeleton until `ready` event), **consent copy** (auto-charges authorization text), teal `SAVE CARD` CTA (disabled until element ready), footer `<lock-icon /> Encrypted and processed securely`.
+  - The Payment Element handles cards + wallets (Google Pay / Apple Pay / Link) automatically — the previously-static wallet button + divider + fake card inputs were **removed** in favor of the real Stripe iframe.
+  - Wallet button + `credit-card-icon` were removed from `unlock-valet-pass.imports.ts` (only `lock-icon` remains).
 - **`shared/components/stripe-saved-card/`** — chip for `showSavedCard()`:
   - Panel with left brand-color accent bar (Visa blue / Mastercard orange / Amex blue / Discover orange via `[attr.data-brand]` + `color-mix` for badge tint)
   - Caption "PAYMENT METHOD ON FILE" with lock icon, brand name (mapped from slug), •••• last4 (large bold), right-aligned `EXPIRES MM/YY` (tabular-nums)
@@ -178,11 +274,34 @@ Timing at the boot completion moment:
 - `app.component.ts` (+`@FadeOut` on loader element)
 - `shared/animations/fades.ts` (+`fadeOut`, +`softRise`)
 
-## Open questions (blocked by backend / product)
+## Known gaps (frontend can't close without backend or product decision)
 
-1. **SetupIntent endpoint** — need `POST /payment/stripe/web/card-on-file` (or similar) that returns `{ clientSecret, publishableKey, accountId }`. Without it the `Add card` button is a no-op and the static form is decorative. Once available: mirror `stripe-payment.component.ts` but with `stripe.elements({ mode: 'setup', clientSecret })` + `stripe.confirmSetup()` + polling the read endpoint until `hasActiveCardOnFile` flips.
-2. **What "Pay" does when CoF is active** — product decision still open. Three options laid out: (A) hide the Pay button entirely (CoF implies backend charges off-session at checkout, no manual pay needed), (B) one-tap off-session charge via a new endpoint, (C) confirmation modal → same charge. Leaning toward (A) but not confirmed.
-3. **PENDING re-entry UX** — silent re-offer of the form vs. explicit "your previous attempt didn't confirm, try again" message. Both would work; not decided.
+### Consent gate — timing mismatch with guidance
+Guidance is that `POST /card-on-file` (with `consentTextVersion`) should fire in the same user gesture as `confirmSetup`, so consent is only recorded when the user actively saves. Today's flow calls `stripeCofSetup(...)` in `ngOnInit` (needed to obtain `publishableKey` + `clientSecret` up front to mount the Element). The UI does gate the save behind the checkbox, but the SetupIntent + `consentTextVersion` are already created at page load. To fully align:
+- Backend adds a publishable-key-only endpoint (or embed pk in env if platform-wide), or
+- Two-phase COF setup: init (no consent) → confirm (with `consentTextVersion` at click).
+
+### CoF exists but Pay dialog still asks for a card
+When `hasActiveCard()` is true and the guest clicks Pay, `stripe-payment` mounts a fresh empty Payment Element via `stripeGetParameters(ticket, tipAmount)` — the Element does not know about the saved PaymentMethod, so the guest is asked to re-enter card details. Kills the CoF value proposition. Fix requires backend cooperation, options:
+1. New endpoint `POST /payment/stripe/web/charge-card-on-file { ticket, tipAmount }` that confirms the PI server-side with the saved PM (`off_session: true`) and returns success / `requires_action` (3DS). Frontend skips the Element entirely.
+2. Existing endpoint returns a PI already carrying `payment_method` set to the CoF, so FE calls `stripe.confirmCardPayment(clientSecret)` without Elements.
+3. Backend exposes a Customer Session so `stripe.elements({ clientSecret, customerSessionClientSecret })` renders the saved card as a pre-selected option in the Element.
+Blocked pending backend contract — user prompted to confirm what path exists.
+
+### Backend `getPaymentDetail` returns malformed `tipConfig` on some locations
+Observed 2026-07-28 on operator=8 / location=16 (Evolution Test, ticket=11, rate=CoF $1.5):
+```json
+"tipConfig": { "allowTipping": true, "amounts": [null] }
+```
+Missing `type` (`'P'` or `'F'`) and `customAmountAllowed`; `amounts` array contains only `null`. Frontend template shows a single empty chip labelled `%` (fallback in `@else` renders `{{ tip }}%` with `tip === null`). Fix belongs on backend — should return either a complete `tipConfig` for locations with configured tips, or `allowTipping: false` for locations without. Defensive FE filter (skip nulls + treat missing `type` as no tipping) can bridge until backend is fixed.
+
+## Open questions (blocked by product / not yet decided)
+
+1. **Backend restrict `payment_method_types=["card"]`** on the CoF SetupIntent — see "Backend gotcha" above. Until this lands, guests see the "Banco" tab + full Link signup form injected inside the card tab. Pending request to backend team.
+2. **Consent copy version + text** — currently a placeholder string (`'By tapping Save card you authorize ... until you check out or remove the card.'`) with version constant `cof-consent-v1`. Legal/Product must supply the official copy AND bump the version string when it changes; the version travels in the POST body as audit trail.
+3. **What "Pay" does when CoF is active** — product decision still open. Three options laid out: (A) hide the Pay button entirely (CoF implies backend charges off-session at checkout, no manual pay needed), (B) one-tap off-session charge via a new endpoint, (C) confirmation modal → same charge. Leaning toward (A) but not confirmed.
+4. **PENDING re-entry UX** — currently the setup POST fires unconditionally on component mount, and the backend self-heals (cancels the old PENDING SetupIntent). No explicit "previous attempt didn't confirm" message shown. Silent re-offer works; product can revisit if guests report confusion.
+5. **10s poll timeout behavior** — currently shows "Confirmation is taking longer than usual" snackbar and leaves the gate open. If the webhook lands afterward, the guest must refresh to see the gate close. Alternative: continue polling indefinitely in the background with a longer interval. Kept simple for now.
 
 ## Discarded alternatives (do not resurrect without reason)
 

@@ -228,3 +228,27 @@ El initializer **retorna** el observable de `signIn` para que Angular espere ant
 - ⏳ Tipar el snapshot del ticket (`unknown` → interface real cuando se decida qué consumir)
 - ⏳ Reemplazar `console.log` del initializer y de `app.component` por flujo productivo
 - ⏳ Decidir si extraer un `tickets-service.ts` separado o mantener el listener en `firebase-service.ts`
+
+---
+
+## Rollback y restauración (2026-06 → 2026-08-04)
+
+**Rollback 2026-06/07**: la feature completa se removió del develop del guest-page via rama `chore/remove-firebase-auth` y PR #37 (merge commit `1fee681f`). El commit `9f723a6c chore: remove firebase auth and live ticket monitoring` borró los 22 archivos (`ticket-monitoring/`, `firebase-service.ts`, `firebase-state.ts`, `firebase-credentials.ts` initializer, `decrypter.ts`, `firebase-ticket.ts`, `ticket-status.ts`, icons `clock`/`key`, config en `app.config.ts` + 3 env files) y bajó `@angular/fire`, `crypto-js`, `@types/crypto-js` del `package.json`. Contexto histórico no documentado en esa sesión — solo el hecho de que ocurrió. Backend en ms-oauth-service NO se removió: `feature/firebase-guest-credentials` sigue mergeada a `feature/staging` y desplegada en dev con el endpoint `GET /security/credentials/firebase` funcional.
+
+**Restauración 2026-08-04**: producto pidió el componente de vuelta ("me lo están pidiendo"). En `frontend-guest-page` sobre la rama local `feature/firebase-auth` (que estaba caught up con develop, por lo tanto también tenía el rollback aplicado):
+
+1. `git revert -m 1 1fee681f --no-edit` — un solo commit `cddfcd2a` que re-agrega los 22 archivos con 1345 insertions, cero conflictos (git auto-mergeó `package.json` limpiamente).
+2. `pnpm install` — trajo `@angular/fire@19.2.0`, `crypto-js@4.2.0`, `@types/crypto-js@4.2.2` sin conflictos de lockfile.
+3. `tsc --noEmit -p tsconfig.app.json` → exit 0.
+4. Push `feature/firebase-auth` → origin.
+5. `git switch develop` + merge → merge commit `26961480 Merge branch 'feature/firebase-auth' into develop`.
+6. Push develop → CI/CD → desplegado en dev AWS y validado por el usuario.
+
+**Lección**: cuando origin tiene una rama feature pinneada a un commit viejo (ej `origin/feature/firebase-auth` @ `a4c5b6a4`) pero local está caught up con develop post-rollback, `git log develop..HEAD` sale vacío y da la ilusión de que "sólo bumpear versión y mergear" bastaría. En realidad no — el rollback ya se aplicó al mismo tiempo en local. Único camino real: revert del merge del rollback (`-m 1`). Ver `feedback_merge_push_divergence.md` como pattern análogo (obstáculos que se resuelven con git plumbing, no con escalación).
+
+## Estado 2026-08-04 (post-restauración)
+
+- ✅ Todos los 22 archivos de vuelta en `develop` y desplegados en dev
+- ✅ Backend endpoint sigue funcional (nunca se removió)
+- ✅ Rama `feature/firebase-auth` en origin apunta a `cddfcd2a` (revert commit)
+- Los "pendientes" del bloque anterior siguen siendo pendientes — nadie los abordó porque el trabajo se pausó cuando ocurrió el rollback

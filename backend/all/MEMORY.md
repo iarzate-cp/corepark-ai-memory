@@ -6,12 +6,18 @@
 - [CorePark Backend — Stack Tecnológico](project_stack.md) — Java 17 (oauth=21), Spring Boot 3.5.14/3.5.15, PostgreSQL compartida, RabbitMQ SSL, AWS, Firebase, Claude AI
 - ["Commerce" = frontend](project_commerce_frontend.md) — "Commerce" es el proyecto FRONTEND de CorePark, no un microservicio backend
 
+## Referencias
+- [parking_service — identidad de fila](reference_parking_service_row_identity.md) — PK real incluye `check_in`; un ticket string se repite; SQL para match desde local time
+- [phone_code_id — es countryId, no dial](reference_phone_code_id_semantics.md) — la columna es FK a `custom.cat_country.country_id`; `microservice-reports` devuelve el dial (`cc.phone_code`) como `guestPhoneCode`, no el id
+- [Gateway — rutas por prefijo](reference_gateway_route_prefixes.md) — lista actual, StripPrefix; `/validations/**` y `/catalogs/**` no están ruteados, usar `/valet/` desde el cliente
+
 ## Feedback
 - [Conteos verificados por grep](feedback_endpoint_counts.md) — Siempre usar grep sobre src/main para contar endpoints, no estimaciones
 - [Java 21 en ms-oauth-service](feedback_java_version_oauth.md) — Solo ms-oauth usa Java 21; el resto sigue en Java 17
 - [Acceso a Firebase vía ms-firebase-service](feedback_firebase_access_pattern.md) — Código NUEVO consume ms-firebase vía REST, no usa FirebaseDao directo
 - [DDL — substance sobre formato ceremonial](feedback_ddl_substance_over_format.md) — En DDLs priorizar Purpose/COMMENT/rationale sobre paridad de \set headers, numeración de rollback, etc.
 - [Audit no debe bloquear operativa](feedback_audit_should_not_gate_operations.md) — JOINs a tablas de audit son LEFT por defecto; orphans se reparan vía UI existente, no con endpoint/DDL nuevos.
+- [Evitar delegación entre módulos](feedback_avoid_cross_module_delegation.md) — reusar service ajeno arrastra constraints, MQ, y mismatches de enums; mejor DAO/service propio en el módulo nuevo
 
 ## Documentación detallada por microservicio
 - [Docs ms-valet-service](docs_ms_valet_service.md) — Puerto 9000, ~115 endpoints, núcleo valet, EV, cupones, agregadores

@@ -22,6 +22,8 @@
 ## Documentación detallada por microservicio
 - [Docs ms-valet-service](docs_ms_valet_service.md) — Puerto 9000, ~115 endpoints, núcleo valet, EV, cupones, agregadores
 - [Docs microservice-reports](docs_microservice_reports.md) — Puerto 9002, ~87 endpoints, 34 tipos de reportes, scheduler 5min
+- [Maven local — el wrapper no sirve](reference_maven_local_setup.md) — `./mvnw` resuelve 3.6.0 y truena; usar el 3.9.9 de `~/.m2/wrapper/dists/`; no usar `-o` tras mergear trabajo ajeno
+- [microservice-reports → ms-reports-service](reference_ms_reports_repo_moved.md) — Repo renombrado en GitHub; el remote local sigue viejo y funciona por redirect
 - [Docs ms-backoffice-service](docs_ms_backoffice_service.md) — Puerto 9004, ~251 endpoints, admin/config, catálogos, tarifas, Firebase, S3, Slack
 - [Docs ms-pms-service](docs_ms_pms_service.md) — Puerto 9005, ~31 endpoints, Opera/StayNTouch/Guesty/Infor, Claude AI arrivals
 - [Docs ms-notifications-service](docs_ms_notifications_service.md) — Puerto 9006, ~24 endpoints, SMS Twilio, email, chat con receipts

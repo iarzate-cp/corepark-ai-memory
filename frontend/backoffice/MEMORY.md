@@ -17,7 +17,7 @@
 - [Guest Profile — Add Car feature](project_guest_profile_add_car.md) — Dialog + service + integración listos en hotfix/guest-profile/add-car; pendiente commit+PR
 - [Bug — DELETE car-profile 500 en autos sin fotos](project_delete_car_500_bug.md) — Fix aplicado en rama fix/car-profile-delete-empty-photo-reel; commit+PR pendientes del usuario
 - [Validación — no borrar carro si es el único](project_single_car_validation.md) — Restricción front+back coordinada; diseño original posiblemente obsoleto con el nuevo add-car flow
-- [Git — no crear commits ni branches](feedback_no_git.md) — El usuario maneja git manualmente; Claude solo edita archivos
+- [Git — nunca por iniciativa propia, completo cuando lo piden](feedback_no_git.md) — Default: solo editar archivos. Si piden commit+push+merge, ejecutar la secuencia entera; divergencia se rodea, no se escala
 - [URL setter interceptor + endpoints unificado](project_url_setter_interceptor.md) — Rama feature/interceptor/url-setter lista pero NO en producción; interceptor + endpoints.ts único reemplazan pathSetter/apiUrl/enums viejos
 - [cp-time-picker — panel en DS + time-field wrapper en backoffice](project_ds_time_picker.md) — Panel DS listo; wrapper local `time-field` (CVA + CDK overlay) creado; 5 forms migrados a 'HH:mm' string; build pasa; falta cp-time-input en DS, cp-date-picker, cp-date-range-input antes de eliminar nxt-pick-datetime
 - [Handoff URLs — defer to /reports/ convention](feedback_backend_handoff_url_paths.md) — Backend handoffs often use shorthand paths; prepend the sibling-endpoint prefix by default instead of copying verbatim
@@ -34,3 +34,5 @@
 - [Response envelope no es universal](feedback_response_envelope_varies.md) — CLAUDE.md dice {data,code,message} pero algunos endpoints spread payload al top level; verificar antes de unwrap
 - [CatalogueState.init() puede ser null](feedback_catalogue_state_nullability.md) — Pipes/computed que consumen init() deben guardar contra null antes de destructurar; caso conocido: CodePhoneNumberPipe reventando en TicketLogTableComponent
 - [Damage photos — filename convention](project_damage_image_filename.md) — S3 `IMG_{ticket}_yyyy-MM-dd-HH-mm-ss-SSS` con hora local del dispositivo; pipe `damageImageDate` lo formatea con fallback a lastModified
+- [Activity Log — render contextual por status](project_activity_log_status_rendering.md) — RELOCATE from/to camina historial (`logRow ?? logSpot`); pipes por dato en `core/pipes/`; `logRate` viene con trailing space
+- [Ticket Log — columna Room Number](project_ticket_log_room_number.md) — Rama feature/ticket-log-room-number en backoffice + microservice-reports (ambas desde main); hotel_room lo llena PMS/Opera, 19.2% fill rate; backend primero en el deploy

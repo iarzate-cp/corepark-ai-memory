@@ -1,5 +1,7 @@
 # Memory Index
 
+> **Toda memoria debe replicarse a `~/Dev/corepark-ai-memory` antes de cerrar la sesión — ahí vive la verdad.** Ver [Espejo de memorias](feedback_memory_mirror.md).
+
 - [User Profile](user_profile.md) — Israel Arzate, senior Angular dev at Corepark, prefers full autonomy, writes in Spanish
 - [Design System Architecture](project_design_system.md) — build pipeline, dist layout, ng-packagr quirks, rsync workflow for local dev
 - [ButtonDirective — SCSS Migration](project_button_directive.md) — full .cp-btn SCSS, simplified hostClass(), BEM class map, specificity notes
@@ -10,7 +12,14 @@
 - [corepark-ui Component API](project_corepark_ui_components.md) — selector, inputs, outputs y comportamiento clave de cada componente/directiva
 - [corepark-ui Token System](project_corepark_ui_tokens.md) — definición completa de tokens SCSS (colores, spacing, tipografía, radius, shadows, z-index, grid)
 - [Pending Work](project_pending_work.md) — branches activos, cambios sin commit, tareas pendientes por repo (design-system: `develop`, backoffice: `refactor/ticket-log`)
+- [Migración de layouts — estado 2026-08-26](project_migration_status.md) — qué está hecho por repo, ramas, y el riesgo de que un `pnpm install` limpio revierta el build local
+- [Categorías de primer nivel y layouts](project_layouts_category.md) — lib/layouts, lib/services; la ubicación física define la categoría; deuda de lib/directives
+- [cp-app-layout + cp-app-nav + footer](project_cp_app_layout.md) — API, knobs, modelo de padding por bloque, acordeón del menú, cpNavAction
+- [cp-auth-layout](project_cp_auth_layout.md) — API, knobs por tema, y la técnica @property para animar gradientes
+- [Gotchas de Angular y tooling](feedback_angular_gotchas.md) — proyección vs @if, atributos que no fallan, pnpm minimumReleaseAge, orden de styles
+- [Espejo de memorias](feedback_memory_mirror.md) — corepark-ai-memory es la fuente de verdad; mapeo de carpetas y cómo replicar
 - [Commit Scope](feedback_commits.md) — solo commitear en el design system, nunca en el backoffice
+- [Package Manager — siempre pnpm](feedback_package_manager.md) — nunca npm, en ningún repo
 - [CDK Overlay Animated Panel Pattern](project_cdk_overlay_pattern.md) — enter/exit animations con ComponentRef + setTimeout + CSS classes
 - [Import Paths — @corepark/corepark-ui](feedback_import_paths.md) — usar siempre @corepark/corepark-ui, nunca subpaths de CLAUDE.md
 - [Backoffice Dialog Wrappers](feedback_backoffice_dialog_wrappers.md) — wrapper-dialog/dialog-wrapper NO migran a cp-dialog-content por lote; migrar dialog a dialog individualmente

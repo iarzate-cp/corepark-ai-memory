@@ -3,7 +3,10 @@ name: frontend-validation — Token Namespace y Body Background
 description: En frontend-validation los tokens --color-bg-* y --color-text-* NO existen; usar siempre --cp-ui-color-* para layouts que hostean componentes de corepark-ui
 type: feedback
 originSessionId: 4d50cc0f-67f8-4b5c-bcf2-e483eae1dd13
+modified: 2026-08-27T03:54:52.235Z
 ---
+> **DESACTUALIZADO desde 2026-08-26.** Ya existe un puente en `src/assets/scss/root.scss`: todos los tokens locales aliasan a su equivalente `--cp-ui-*`, así que `var(--color-grey-400)` ya resuelve a `var(--cp-ui-color-text-700)`. El `body` también apunta a `--cp-ui-color-bg-app`. Escribir SCSS nuevo directamente con `--cp-ui-*` sigue siendo lo correcto; los nombres locales son transitorios y se van borrando por componente. Ver [[project_migration_status]].
+
 En frontend-validation, el namespace propio de tokens (`--color-*`) **no define** tokens de superficie ni de texto compatibles con el design system. Solo tiene `--color-main-*`, `--color-primary-*`, `--color-accent-*`, `--color-grey-*`, `--fs-*`, `--fw-*`.
 
 **El problema**: `_normalizer.scss` pone `body { background: var(--color-grey-500) }` = `hsl(0,0%,13%)` (casi negro). Cualquier layout sin background explícito hereda ese fondo oscuro.

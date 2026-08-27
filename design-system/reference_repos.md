@@ -3,6 +3,7 @@ name: Repository Paths & Key Files
 description: Absolute paths to all three repos and their most important files
 type: reference
 originSessionId: 2a38666b-8ed5-4a8a-af67-066ed3e5a108
+modified: 2026-08-27T03:55:11.080Z
 ---
 ## Design System repo
 
@@ -11,7 +12,9 @@ originSessionId: 2a38666b-8ed5-4a8a-af67-066ed3e5a108
 - **Library dist:** `dist/corepark-ui/`
 - **npm registry config:** `.npmrc` → `@corepark:registry=https://npm.pkg.github.com`
 - **Build + sync commerce:** `npm run build && npm run sync:commerce`
-- **Current version:** `0.0.13` (publicada 2026-06-09)
+- **Current version:** `0.0.28` (publicada 2026-08-26) — pero el `dist/` local va por delante, ver [[project_migration_status]]
+- **Comandos:** `pnpm run build`, `pnpm run sync:{commerce,validation,backoffice,valet}`, `pnpm run publish:lib`, `pnpm test`
+- **Registro:** GitHub Packages, autenticado como `iarzate-cp`
 - **Key files:**
   - `projects/corepark-ui/src/styles.scss` — consumer entry point (source)
   - `dist/corepark-ui/styles.scss` — consumer entry point (dist, auto-fixed by build:fix-paths)
@@ -34,13 +37,14 @@ originSessionId: 2a38666b-8ed5-4a8a-af67-066ed3e5a108
 ## Frontend Validation repo
 
 - **Root:** `/Users/israel/Dev/frontend-validation`
-- **App name:** "validation-portal" — portal de validación
-- **Branch activo:** `chore/update-angular-version`
+- **App name:** "validation-portal" — el producto se llama ahora **Partner** (antes "Hotel Link" / "Validation Portal")
+- **Rama de integración:** `develop` (NO `main` — iba 43 commits por delante). Rama activa 2026-08-26: `feature/auth-layout-ds`
 - **Port:** `4600` con SSL (`ng serve --port 4600 --ssl`)
-- **Angular version:** 20.x (nota: peerDeps del DS son ^21, pero el rsync bypassa el check)
-- **Package manager:** pnpm
-- **Installed lib:** `node_modules/@corepark/corepark-ui/` (via rsync, no en package.json)
-- **Sync command:** `npm run sync:validation` (desde design-system)
+- **Angular version:** 21.2.x — los peerDeps `^21` del DS cuadran
+- **Package manager:** pnpm (ojo con `minimumReleaseAge`, ver [[feedback_angular_gotchas]])
+- **Installed lib:** en `package.json` como `^0.0.28`
+- **Sync command:** `pnpm run sync:validation` (desde design-system)
+- **Angular project name:** `validate` (los builds salen en `dist/validate`)
 
 ## Frontend Backoffice repo
 

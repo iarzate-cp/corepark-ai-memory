@@ -1,3 +1,4 @@
+- [Branching model](feedback_branching_model.md) — Toda rama sale de `main`; `feature/staging` (o `develop`) es el ambiente de pruebas y absorbe todo; `main` solo por PR. Considerar AL EMPEZAR cualquier trabajo
 - [User speaks Spanish](user_language.md) — Respond in Spanish (Mexican); technical terms stay in English
 - [From-scratch preference](feedback_from_scratch_preference.md) — On his own libraries, avoid wrapping third-party deps; build from spec
 - [Coding style rules](feedback_coding_style.md) — Functional/declarative, no ternaries, `.at()` over `arr[n]`, early returns, no classes for stateless logic

@@ -20,7 +20,11 @@ Verificado contra dev el 2026-09-02:
 | `payment_gateway_payment_uuid` del **mismo** cargo | `DB-DATA_NOT_FOUND` |
 | `stripe_transaction.uuid` | `DB-DATA_NOT_FOUND` (el resolver solo consulta windcave) |
 
-`transactionReference` en las APIs (Windcave y Stripe `get-parameters`) **es ese mismo uuid** — o sea, es el receiptId.
+El endpoint **valida que el id sea un UUID**: un `pi_...` o `ch_...` responde `INVALID-INPUTS-FIELDS`.
+
+**Ojo, Stripe es la excepción a la regla de arriba.** Su referencia de recibo NO es `stripe_transaction.uuid` sino el `pi_...` o el uuid del ledger (`payment_gateway_payment_uuid`) — así lo resolvió el PR #40 de notifications. Como el endpoint solo acepta UUIDs, en Stripe la referencia web tiene que ser la del ledger. Detalle en [[bug_sms_receipt_missing_gateways]].
+
+`transactionReference` (Windcave y Stripe `get-parameters`) es el uuid que el caller genera al iniciar la transacción; para Windcave coincide con `windcave_transaction.uuid`. **Para Stripe falta confirmar** si es el uuid del ledger o el de `stripe_transaction` — los dos coinciden en la mayoría de los cargos y divergen en algunos.
 
 `company.parking_service` **no tiene** columna de recibo (solo `uuid` y `lodging_guest_info_uuid`).
 
@@ -54,7 +58,7 @@ La respuesta OK trae `receipt: { customerReceipt, customerReceiptWidth, paymentO
 ## Consumidores del receiptId
 
 - **`mobile_worker` (Android)** — el consumidor real. `BulkCheckOutValidateListFragment.kt:280` hace `receiptId = if (gateway == 1) paymentId else response.receiptId`, tomándolo del transaction-detail de valet. Su `receipt_journey/` manda el SMS.
-- **`ms-valet-service`** lo expone en `TransactionsDao.java:59` (`QUERY_GET_TRANSACTION_DETAIL`): `COALESCE(CASE WHEN gateway=2 THEN wt.uuid END, pgp.payment_gateway_payment_uuid)`. **Ese fallback no resuelve** para Square/Stripe/FreedomPay.
+- **`ms-valet-service`** lo expone en `TransactionsDao.java:59` (`QUERY_GET_TRANSACTION_DETAIL`): `COALESCE(CASE WHEN gateway=2 THEN wt.uuid END, pgp.payment_gateway_payment_uuid)`. **No lo "arregles" para que devuelva `stripe_transaction.uuid`** — el fallback al uuid del ledger es justo lo que el lookup de Stripe espera. Se intentó el 2026-09-02 y se revirtió.
 - **Guest page** solo muestra recibo de Square, vía el `receiptUrl` que devuelve `pay-ticket`.
 
 Ver [[bug_sms_receipt_missing_gateways]].

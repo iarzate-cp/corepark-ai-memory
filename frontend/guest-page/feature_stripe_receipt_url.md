@@ -14,9 +14,11 @@ Descartado: linkear directo al `receipt_url` de Stripe. Habría necesitado un en
 
 ## El front ya tiene el id
 
-`StripeGetParameters` (`core/models/definitions/stripe.ts:10-18`) trae `transactionReference`, que es el uuid de la transacción del gateway = el receiptId (ver [[project_receipt_flow_multi_gateway]] en backend/all). Se guarda en `StripeState.parameters` en el init (`stripe-payment.component.ts:74`), y la fila de `stripe_transaction` existe desde el `get-parameters` (hay filas con `status = requires_payment_method`), así que el uuid está disponible **antes** del cobro. Cero endpoints nuevos en el front.
+`StripeGetParameters` (`core/models/definitions/stripe.ts:10-18`) trae `paymentIntentId` y `transactionReference`. Se guardan en `StripeState.parameters` en el init (`stripe-payment.component.ts:74`), y la fila de `stripe_transaction` existe desde el `get-parameters` (hay filas con `status = requires_payment_method`), así que el id está disponible **antes** del cobro. Cero endpoints nuevos en el front.
 
-**Pendiente de confirmar:** que el `transactionReference` de Stripe sea literalmente `stripe_transaction.uuid`. Probado por simetría en el lado Windcave, no directo en Stripe. Se verifica abriendo un ticket Stripe en dev, viendo `get-parameters` en el network tab, y comparando contra la fila.
+**Cuál de los dos usar:** el endpoint `/payment/receipts/{id}` **solo acepta UUIDs** — un `pi_...` responde `INVALID-INPUTS-FIELDS`. Y la convención de Stripe del PR #40 de notifications es `pi_...` **o el uuid del ledger** (`payment_gateway_payment_uuid`), **nunca `stripe_transaction.uuid`**. Así que el link web tiene que llevar el uuid del ledger.
+
+**Pendiente de confirmar (bloquea escribir el front):** que `transactionReference` sea el uuid del **ledger** y no el de `stripe_transaction` — coinciden en la mayoría de los cargos y divergen en algunos. Se verifica abriendo un ticket Stripe en dev, viendo `get-parameters` en el network tab, y comparándolo contra `payment_gateway_payment.payment_gateway_payment_uuid`.
 
 ## Trampas del lado guest page
 
@@ -28,12 +30,12 @@ Descartado: linkear directo al `receipt_url` de Stripe. Habría necesitado un en
 
 ## Cambios por repo
 
-1. **`ms-payment-service`** (bloqueante, repo no clonado): resolver gateway 4 por `stripe_transaction.uuid` + agregar campo de URL al schema de `Receipt`.
-2. **`frontend-receipt`**: declarar y usar `paymentOperator`, redirigir en operadores hospedados, y arreglar el manejo de error (el endpoint responde 200 con `receipt: null`).
+1. **`ms-payment-service`** (el único cambio de backend que falta; repo no clonado): resolver gateway 4 en `/receipts/{id}` espejeando `CommonServiceImpl.getStripeReceiptUrl` de notifications (por uuid del ledger), + agregar campo de URL al schema de `Receipt`, + distinguir "recibo no disponible todavía" para que el cliente reintente.
+2. **`frontend-receipt`**: declarar y usar `paymentOperator`, redirigir en operadores hospedados, y arreglar el manejo de error (el endpoint responde 200 con `receipt: null`, así que hay que ramificar por `code !== 'OK'`).
 3. **`frontend-guest-page`**: lo de arriba.
-4. **`ms-valet-service`** rama `feature/stripe-receipt-id` (creada desde `main` el 2026-09-02): devolver `st.uuid` para gateway 4 en `TransactionsDao.java:59`. El fallback actual coincide con el uuid correcto en 4 de 5 cargos de dev pero no en todos → bug intermitente.
-5. **`ms-notifications-service`**: ver [[bug_sms_receipt_missing_gateways]].
+4. **`ms-valet-service`**: **ningún cambio.** Se intentó devolver `st.uuid` para gateway 4 y se revirtió — el fallback al uuid del ledger ya es el correcto.
+5. **`ms-notifications-service`**: **ningún cambio** para Stripe, ya resuelto por el PR #40. Solo queda FreedomPay, que es otro alcance.
 
-## Caso borde a resolver
+## Caso borde ya explicado
 
-En dev, 148 cargos Stripe `succeeded` pero solo 132 con `receipt_url` — **16 cobros exitosos sin recibo (11%)**. Hay que definir el estado "recibo no disponible" y averiguar si es una carrera con el webhook que puebla la columna.
+En dev, 148 cargos Stripe `succeeded` pero solo 132 con `receipt_url` — 16 sin (11%). **Causa confirmada:** el `receipt_url` lo escribe el webhook `charge.updated` de PaymentService, que puede tardar segundos respecto al cobro. Notifications ya lo modela con `ERR_BS_STRIPE_RECEIPT_NOT_AVAILABLE` para que el caller reintente; el front debe mostrar "recibo en proceso", no un error definitivo.

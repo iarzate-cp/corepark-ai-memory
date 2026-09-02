@@ -5,8 +5,8 @@
 - [CorePark Backend — Visión General](project_overview.md) — 8 microservicios: valet, reports, backoffice, pms, notifications, oauth (NUEVO), partner (NUEVO), firebase (NUEVO)
 - [CorePark Backend — Stack Tecnológico](project_stack.md) — Java 17 (oauth=21), Spring Boot 3.5.14/3.5.15, PostgreSQL compartida, RabbitMQ SSL, AWS, Firebase, Claude AI
 - ["Commerce" = frontend](project_commerce_frontend.md) — "Commerce" es el proyecto FRONTEND de CorePark, no un microservicio backend
-- [Flujo de recibos multi-gateway](project_receipt_flow_multi_gateway.md) — `GET /payment/receipts/{id}`: el receiptId es el uuid de la tabla del gateway; dónde vive el recibo de cada uno; el endpoint responde 200 en los errores
-- [SMS de recibo truena en Stripe y FreedomPay](bug_sms_receipt_missing_gateways.md) — El enum `PaymentService` solo tiene WINDCAVE/SQUARE/SHIFT4; los otros dos lanzan `ERR_BS_PAYMENT_CONF_NOT_FOUND`
+- [Flujo de recibos multi-gateway](project_receipt_flow_multi_gateway.md) — `GET /payment/receipts/{id}`: el receiptId es el uuid de la tabla del gateway (Stripe es la excepción, usa el del ledger); dónde vive el recibo de cada uno; el endpoint responde 200 en los errores
+- [SMS de recibo — Stripe resuelto, FreedomPay roto](bug_sms_receipt_missing_gateways.md) — PR #40 resolvió Stripe vía lookup en BD; FREEDOMPAY sigue ausente del enum. Incluye la convención de identificador de recibo de Stripe (NO es stripe_transaction.uuid)
 
 ## Referencias
 - [parking_service — identidad de fila](reference_parking_service_row_identity.md) — PK real incluye `check_in`; un ticket string se repite; SQL para match desde local time

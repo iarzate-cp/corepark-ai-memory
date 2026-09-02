@@ -1,29 +1,40 @@
 ---
-name: SMS de recibo truena en Stripe y FreedomPay (enum PaymentService incompleto)
-description: PaymentService en ms-notifications-service solo tiene WINDCAVE/SQUARE/SHIFT4; con Stripe o FreedomPay fromString devuelve null y lanza ERR_BS_PAYMENT_CONF_NOT_FOUND
+name: SMS de recibo — Stripe RESUELTO (PR #40), FreedomPay sigue roto
+description: PaymentService ya soporta STRIPE vía lookup en BD; FREEDOMPAY sigue ausente y lanza ERR_BS_PAYMENT_CONF_NOT_FOUND. Incluye la convención de identificador de recibo de Stripe
 metadata:
   type: project
 ---
-`POST /notifications/sms/send-receipt` arma el link así (`SmsServiceImpl.java:460-461`):
+`POST /notifications/sms/send-receipt` arma el link con `PaymentService.getTicketUrl() + paymentId`, y el gateway se lee de BD (`CommonDAOImpl` → `custom.cat_payment_gateway.name`, UPPERCASE). `PaymentService.fromString` es **name-based**, así que un gateway ausente del enum devuelve null y `CommonServiceImpl.getPaymentService` lanza `ERR_BS_PAYMENT_CONF_NOT_FOUND`.
 
-```java
-final PaymentService paymentService = commonService.getPaymentService(operatorCompanyId, parkingLocationId);
-final String finalMessage = smsBody + " " + paymentService.getTicketUrl() + request.getPaymentId();
-```
+## Estado (verificado en `main` el 2026-09-02)
 
-El gateway se lee de BD (`CommonDAOImpl.java:36-48` → `custom.cat_payment_gateway.name`), y el enum `notifications/enums/PaymentService.java` solo declara `WINDCAVE`, `SQUARE` y `SHIFT4`. Los nombres en BD son UPPERCASE exactos, así que:
-
-| Gateway en BD | `PaymentService.fromString` | Resultado |
+| Gateway en BD | Enum | Resultado |
 |---|---|---|
-| SQUARE | ✅ | link a `squareup.com/receipt/preview/` |
-| WINDCAVE | ✅ | link a `receipts.corepark.com/` |
-| **STRIPE** | **null** | **`ServiceException(ERR_BS_PAYMENT_CONF_NOT_FOUND)`** en `CommonServiceImpl:33-37` |
-| **FREEDOMPAY** | **null** | **misma excepción** |
+| SQUARE | ✅ | `squareup.com/receipt/preview/` + paymentId |
+| WINDCAVE | ✅ | `receipts.corepark.com/` + paymentId |
+| STRIPE | ✅ | **resuelto por PR #40** (ver abajo) |
+| **FREEDOMPAY** | **ausente** | **`ERR_BS_PAYMENT_CONF_NOT_FOUND`** |
 | SHIFT4 | ✅ | link literal `"NOT DEFINED" + paymentId` |
 
-Ambos gateways que faltan deben apuntar a `https://receipts.corepark.com/` — Stripe porque el resolver le devolverá la URL hospedada, FreedomPay porque también guarda texto térmico. Ver [[project_receipt_flow_multi_gateway]].
+FreedomPay guarda texto térmico (`freedompay_afcc_transaction.customer_receipt`), así que su fix es `FREEDOMPAY("https://receipts.corepark.com/")` — pero ojo, eso depende de que el resolver de `ms-payment-service` sepa atenderlo.
 
-## Dos inconsistencias alrededor
+## Stripe: convención de identificador (PR #40, `fix/stripe-receipt-lookup-by-transaction-uuid`)
 
-- **`ReceiptSMS.receiptType` es `@NotNull` pero nunca se lee.** El enum `ReceiptType` (SQUARE/WINDCAVE/FREEDOMPAY) y `PaymentService` (WINDCAVE/SQUARE/SHIFT4) modelan lo mismo y están desalineados. Si se toca esto, unificarlos evita agregar cada gateway nuevo en dos lugares con criterios distintos.
-- **`frontend-valet-web` manda el body equivocado**: `{ticket, phoneNumber, phoneId}` (`tickets-service.ts:184-198`) cuando el bean espera `{paymentId, userPhoneNumber, receiptType}`. El contrato correcto es el del Android (`ReceiptViewModel.kt:171-175`). El botón de la web debería estar dando 400 — sin confirmar en runtime.
+Stripe **no concatena base + id** — su recibo es una URL completa por cargo, persistida por el webhook `charge.updated` en `company.stripe_transaction.receipt_url`. Por eso el enum declara `STRIPE(null)` y `SmsServiceImpl.sendSMSReceipt` ramifica a `commonService.getStripeReceiptUrl(...)`.
+
+Ese lookup (`CommonServiceImpl.getStripeReceiptUrl`) acepta **dos** referencias y decide parseando:
+
+- **si el `paymentId` parsea como UUID** → resuelve por `pgp.payment_gateway_payment_uuid` (el uuid del ledger), haciendo join `st.payment_intent_id = pgp.payment_id`
+- **si no** → resuelve por `st.payment_intent_id` directo (un `pi_...`)
+
+**⚠️ La referencia de recibo de Stripe NO es `stripe_transaction.uuid`.** Es el `pi_...` o el uuid del ledger (`payment_gateway_payment_uuid`). Los dos uuids **coinciden en la mayoría de los cargos y divergen en algunos** (caso real en dev: ledger `4c9872bf-…` vs `st.uuid` `b5b45095-…`), así que usar el equivocado falla de forma intermitente. `ms-valet-service` ya devuelve el correcto en `TransactionsDao` — su fallback a `payment_gateway_payment_uuid` **es lo correcto, no un bug**.
+
+Cuando la URL no está todavía (el webhook puede tardar segundos) o no hay fila, ambos casos salen como `ERR_BS_STRIPE_RECEIPT_NOT_AVAILABLE` para que el caller reintente. Eso explica las filas `succeeded` sin `receipt_url` (132 de 148 en dev).
+
+## Inconsistencia que queda
+
+`ReceiptSMS.receiptType` es `@NotNull` pero **nunca se lee** — el gateway se decide por BD. `ReceiptType` (ya tiene SQUARE/WINDCAVE/FREEDOMPAY/STRIPE) y `PaymentService` (le falta FREEDOMPAY) son dos taxonomías paralelas; el `CLAUDE.md` del repo advierte explícitamente que hay que actualizar **ambas** cuando entra un gateway.
+
+`frontend-valet-web` manda el body equivocado (`{ticket, phoneNumber, phoneId}` en `tickets-service.ts:184-198`); el contrato correcto es el del Android (`ReceiptViewModel.kt:171-175`).
+
+Ver [[project_receipt_flow_multi_gateway]].

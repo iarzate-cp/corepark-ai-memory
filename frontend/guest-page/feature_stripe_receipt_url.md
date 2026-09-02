@@ -1,49 +1,51 @@
 ---
-name: Feature — URL de recibo en Guest Page tras pago Stripe
-description: Decisión y plan para exponer un link al recibo después de pagar con Stripe; el transactionReference de get-parameters ya es el receiptId
+name: Feature — link al recibo del huésped en la Guest Page (entregado)
+description: Botón en la página del ticket que abre receipts.corepark.com/ticket/{parking_service.uuid}; sirve para los 4 gateways; entregado y verificado en dev el 2026-09-02
 metadata:
   type: project
 ---
-Arrancó el 2026-09-02. Objetivo: que el usuario que paga con Stripe en la guest page tenga una URL donde ver lo que pagó — hoy solo Square muestra recibo.
+Entregado y verificado end-to-end en dev el **2026-09-02**. Nació como "que el huésped que paga con Stripe pueda ver su recibo" y terminó siendo gateway-agnóstico.
 
-## Dónde vive el link (decidido 2026-09-02)
+## Contrato final
 
-**En la página del ticket**, entre el bloque de acciones y el QR, **fuera** de la bifurcación de `temporalCheckout` — un huésped en "See you soon!" ya pagó y es el más probable de querer su recibo. Gateado solo con `@if (receiptUuid())`, así que aparece en cualquier ticket con algo cobrado, de cualquier gateway, sin haber pagado en esa sesión.
+```
+ticket-info  →  ticket.ticketUuid   (= company.parking_service.uuid, siempre presente)
+                ↓
+GP muestra el botón si  payments?.length > 0
+                ↓
+{ticketReceiptsBaseUrl}{ticketUuid}  →  receipts.corepark.com/ticket/{uuid}
+                ↓
+GET /payment/receipts/guest/{ticketUuid}  →  recibo por ticket con TODOS sus cargos
+```
 
-Sigue apareciendo además en `PaidTicketDialog` y `CarDeliveredDialog`. **No** vive en el branch de `showUnlockGate()`, que reemplaza toda la página.
+El recibo es **por ticket, no por cargo**: devuelve nombre, cuarto de hotel, la lista completa de pagos con desglose (parking, tax, fee, tarifa nocturna, tip), refunds, cargos declinados, la tarjeta, el logo del operador, y el `receiptUrl` hospedado del gateway por cada pago. Un ticket Card-on-File nocturno real trae 11+ cargos. Por eso no hace falta ningún identificador de cargo — ni `paymentIntentId`, ni `transactionReference`, ni `stripe_transaction.uuid`.
 
-Por qué no basta con los diálogos: en las locations con `allowRequest` el flujo post-pago muestra un snackbar y nunca abre diálogo, así que el link jamás se veía. Eso ya pasaba con Square antes de este cambio.
+`ticketReceiptsBaseUrl` en `Environment`: dev y local `https://d1flyzjaekpl73.cloudfront.net/ticket/`, prod `https://receipts.corepark.com/ticket/`. Misma llave y mismos valores que `frontend-backoffice`, que ya linkeaba a esa página.
 
-## Decisión tomada
+## Cómo llegó a este contrato (para no repetir el camino)
 
-El link apunta a **`https://receipts.corepark.com/{transactionReference}`** (nuestra app de recibos), y la app redirige a `pay.stripe.com` cuando `paymentOperator` es `STRIPE`. Un solo dominio para todos los gateways; Square queda como la excepción histórica.
+Primero expuse un nodo `receipt: { uuid } | null` donde el backend decidía si había recibo. En review, Jorge señaló que **ese uuid es el del ticket, no el de un recibo** — nombrar un bean por quien lo consume en vez de por lo que es. Tenía razón: se cambió por `ps.uuid ticketUuid` en `QUERY_GET_TICKET_INFO`, mapeado por el `BeanPropertyRowMapper` que ya existía. **+4 / −67 líneas.** Ver [[project_receipt_flow_multi_gateway]] en backend/all.
 
-Descartado: linkear directo al `receipt_url` de Stripe. Habría necesitado un endpoint nuevo, porque **Stripe.js no puede dar la URL** — `receipt_url` vive en el *Charge*, no en el *PaymentIntent*, y `confirmPayment` solo devuelve el intent.
+El costo fue perder el gate del backend, porque el uuid existe desde que nace el ticket. Se recuperó en el front con `payments?.length`, que ya viene en el payload con la misma condición (`payment_method IN ('C','B','P')`).
 
-## El front ya tiene el id
+**Caso de borde conocido y aceptado:** un ticket totalmente reembolsado tiene `payments` vacío (la query excluye reembolsados con `AND psr.ticket_charge_uuid IS NULL`) pero la app de recibos sí renderiza refunds. A ese huésped se le esconde el botón de un recibo que sí existe. Si algún día importa, se arregla con un `ticket.hasReceipt` en el backend, no volviendo al bean.
 
-`StripeGetParameters` (`core/models/definitions/stripe.ts:10-18`) trae `paymentIntentId` y `transactionReference`. Se guardan en `StripeState.parameters` en el init (`stripe-payment.component.ts:74`), y la fila de `stripe_transaction` existe desde el `get-parameters` (hay filas con `status = requires_payment_method`), así que el id está disponible **antes** del cobro. Cero endpoints nuevos en el front.
+## Dónde vive el link
 
-**Cuál de los dos usar:** el endpoint `/payment/receipts/{id}` **solo acepta UUIDs** — un `pi_...` responde `INVALID-INPUTS-FIELDS`. Y la convención de Stripe del PR #40 de notifications es `pi_...` **o el uuid del ledger** (`payment_gateway_payment_uuid`), **nunca `stripe_transaction.uuid`**. Así que el link web tiene que llevar el uuid del ledger.
+En la **página del ticket**, entre el bloque de acciones y el QR, **fuera** de la bifurcación de `temporalCheckout` — un huésped en "See you soon!" ya pagó y es el más probable de querer su recibo. Sigue apareciendo también en `PaidTicketDialog` y `CarDeliveredDialog`. No vive en el branch de `showUnlockGate()`, que reemplaza toda la página.
 
-**Pendiente de confirmar (bloquea escribir el front):** que `transactionReference` sea el uuid del **ledger** y no el de `stripe_transaction` — coinciden en la mayoría de los cargos y divergen en algunos. Se verifica abriendo un ticket Stripe en dev, viendo `get-parameters` en el network tab, y comparándolo contra `payment_gateway_payment.payment_gateway_payment_uuid`.
+Por qué no basta con los diálogos: en las locations con `allowRequest` el flujo post-pago muestra un snackbar y nunca abre diálogo, así que el link jamás se veía. Eso ya pasaba con Square antes.
 
-## Trampas del lado guest page
+El componente es `<ticket-receipt-link>` (heredado de `square-payment-receipt` vía `git mv`). Se eliminaron `PaymentDetailState` y el consumo del `receiptUrl` que devolvía `pay-ticket`: un solo link para los cuatro gateways.
 
-- **Orden de `reset()`**: `StripeDialogComponent.onCloseDialog()` llama `StripeState.reset()`, que pone `parameters` en null. Hay que leer el `transactionReference` **antes** o el link se pierde.
-- **`PaymentDetailState` nunca se limpia** y es `providedIn: 'root'`. Hoy no se nota porque solo Square lo escribe en el camino de éxito; en cuanto Stripe también lo escriba, un pago fallido tras uno exitoso mostraría el recibo anterior.
-- `<square-payment-receipt>` tiene el copy y el nombre atados a Square pero el comportamiento es genérico — conviene generalizarlo en vez de duplicar.
-- `Environment` no tiene campo para la URL de la app de recibos. En dev el host es una distribución CloudFront de las que lista el CORS de `application-dev.yml`, **sin identificar cuál**.
-- `StripeDialogComponent.onDone()` hoy solo hace snackbar + cierra: no hay superficie donde viva el link. Lo consistente con Square es abrir `PaidTicketDialog` (que ya trae el gate `@if (isReceiptUrlConfigured())`).
+## La carrera contra el webhook
 
-## Cambios por repo
+Stripe cobra **dentro de un diálogo en la página del ticket**, así que nada re-instancia la página al terminar — a diferencia de Square, que navega desde `/payment`. Y el cargo llega a nuestro ledger por el webhook `payment_intent.succeeded`, segundos después de que el browser confirma (`InitStripeTransactionSubmitter.submit()` es quien escribe la fila).
 
-1. **`ms-payment-service`** (el único cambio de backend que falta; repo no clonado): resolver gateway 4 en `/receipts/{id}` espejeando `CommonServiceImpl.getStripeReceiptUrl` de notifications (por uuid del ledger), + agregar campo de URL al schema de `Receipt`, + distinguir "recibo no disponible todavía" para que el cliente reintente.
-2. **`frontend-receipt`**: declarar y usar `paymentOperator`, redirigir en operadores hospedados, y arreglar el manejo de error (el endpoint responde 200 con `receipt: null`, así que hay que ramificar por `code !== 'OK'`).
-3. **`frontend-guest-page`**: lo de arriba.
-4. **`ms-valet-service`**: **ningún cambio.** Se intentó devolver `st.uuid` para gateway 4 y se revirtió — el fallback al uuid del ledger ya es el correcto.
-5. **`ms-notifications-service`**: **ningún cambio** para Stripe, ya resuelto por el PR #40. Solo queda FreedomPay, que es otro alcance.
+Solución: `TicketInfoState.paymentRefreshRequests` como disparador, y la página hace polling —4 intentos cada 2s— **descartando los payloads intermedios**. Solo compromete storage y state cuando el payload trae **un pago más** de los que la pantalla ya conocía; contar en vez de preguntar "¿hay algún pago?" es lo que lo hace correcto en el segundo cobro de un ticket, no solo en el primero. Si el webhook no llega en la ventana, la pantalla conserva lo que tiene y el link aparece en la siguiente visita.
 
-## Caso borde ya explicado
+**Sin probar todavía:** ese refresh. Todos los tickets Stripe de dev son Overnight con Card-on-File y no muestran botón de pagar, así que nunca se ejercita `onDone()`. Hace falta un ticket con rate normal.
 
-En dev, 148 cargos Stripe `succeeded` pero solo 132 con `receipt_url` — 16 sin (11%). **Causa confirmada:** el `receipt_url` lo escribe el webhook `charge.updated` de PaymentService, que puede tardar segundos respecto al cobro. Notifications ya lo modela con `ERR_BS_STRIPE_RECEIPT_NOT_AVAILABLE` para que el caller reintente; el front debe mostrar "recibo en proceso", no un error definitivo.
+## Pendiente en otro repo
+
+`<guest-receipt>` de `frontend-receipt` **no tiene bloque `@empty`** en su `@for` de pagos. Un ticket válido sin cobros devuelve 200 con listas vacías (el 404 solo cubre ticket inexistente), así que pintaría el encabezado y el cuerpo en blanco. Hoy el gate de `payments` lo evita desde la GP, pero la app debería manejar su propio estado vacío.

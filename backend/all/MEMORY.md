@@ -5,12 +5,13 @@
 - [CorePark Backend — Visión General](project_overview.md) — 8 microservicios: valet, reports, backoffice, pms, notifications, oauth (NUEVO), partner (NUEVO), firebase (NUEVO)
 - [CorePark Backend — Stack Tecnológico](project_stack.md) — Java 17 (oauth=21), Spring Boot 3.5.14/3.5.15, PostgreSQL compartida, RabbitMQ SSL, AWS, Firebase, Claude AI
 - ["Commerce" = frontend](project_commerce_frontend.md) — "Commerce" es el proyecto FRONTEND de CorePark, no un microservicio backend
-- [Flujo de recibos multi-gateway](project_receipt_flow_multi_gateway.md) — `GET /payment/receipts/{id}`: el receiptId es el uuid de la tabla del gateway (Stripe es la excepción, usa el del ledger); dónde vive el recibo de cada uno; el endpoint responde 200 en los errores
+- [Flujo de recibos multi-gateway](project_receipt_flow_multi_gateway.md) — Dos endpoints: `/receipts/{receiptId}` por cargo (200 en errores) y `/receipts/guest/{ticketUuid}` por ticket, el que usa la GP; dónde vive el recibo de cada gateway
 - [SMS de recibo — Stripe resuelto, FreedomPay roto](bug_sms_receipt_missing_gateways.md) — PR #40 resolvió Stripe vía lookup en BD; FREEDOMPAY sigue ausente del enum. Incluye la convención de identificador de recibo de Stripe (NO es stripe_transaction.uuid)
 
 ## Referencias
 - [parking_service — identidad de fila](reference_parking_service_row_identity.md) — PK real incluye `check_in`; un ticket string se repite; SQL para match desde local time
 - [phone_code_id — es countryId, no dial](reference_phone_code_id_semantics.md) — la columna es FK a `custom.cat_country.country_id`; `microservice-reports` devuelve el dial (`cc.phone_code`) como `guestPhoneCode`, no el id
+- [Los tests de contexto necesitan el túnel a la BD](reference_tests_need_db_tunnel.md) — `Failed to obtain JDBC Connection` en `@SpringBootTest` = túnel cerrado, no regresión tuya; cómo atribuirlo con `git stash`
 - [Gateway — rutas por prefijo](reference_gateway_route_prefixes.md) — lista actual, StripPrefix; `/validations/**` y `/catalogs/**` no están ruteados, usar `/valet/` desde el cliente
 
 ## Feedback

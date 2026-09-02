@@ -6,7 +6,7 @@ metadata:
 ---
 ## Dónde vive
 
-`GET /payment/receipts/{receiptId}` en **`ms-payment-service`**, que **NO está clonado** en `~/Dev/Back-End` (repo aparte; ver `project_overview.md`). El gateway lo rutea con `Path=/payment/**` + `StripPrefix=1` y lo deja **público** (`ResourceServerConfig.java:101` → `GET /payment/receipts/** permitAll`). El spec de Scalar del Payment Service viene con `paths: []`, así que el MCP no sirve para esto — usar `api-specs.corepark.com`.
+`GET /payment/receipts/{receiptId}` en **`ms-payment-service`**, clonado en `~/Dev/Back-End/ms-payment-service` desde el 2026-09-02. El gateway lo rutea con `Path=/payment/**` + `StripPrefix=1` y lo deja **público** (`ResourceServerConfig.java:101` → `GET /payment/receipts/** permitAll`). El spec de Scalar del Payment Service viene con `paths: []`, así que el MCP no sirve para esto — usar `api-specs.corepark.com`.
 
 Front que lo consume: **`~/Dev/frontend-receipt`** (Angular 19, `receipts.corepark.com`, una sola ruta `:receiptId`).
 
@@ -27,6 +27,14 @@ El endpoint **valida que el id sea un UUID**: un `pi_...` o `ch_...` responde `I
 `transactionReference` (Windcave y Stripe `get-parameters`) es el uuid que el caller genera al iniciar la transacción; para Windcave coincide con `windcave_transaction.uuid`. **Para Stripe falta confirmar** si es el uuid del ledger o el de `stripe_transaction` — los dos coinciden en la mayoría de los cargos y divergen en algunos.
 
 `company.parking_service` **no tiene** columna de recibo (solo `uuid` y `lodging_guest_info_uuid`).
+
+## El recibo del huésped es por ticket
+
+`GET /payment/receipts/guest/{ticketUuid}` — **el que usa la Guest Page**, distinto del `/receipts/{receiptId}` de arriba. La llave es `company.parking_service.uuid`, y devuelve el ticket con **todos** sus cargos: desglose por pago (parking, tax, fee, tarifa nocturna, tip), refunds, cargos declinados, tarjeta, logo del operador y el `receiptUrl` hospedado de cada pago. Lo sirve `ReceiptServiceImpl.getGuestTicketReceipt`.
+
+Este sí maneja bien los errores: **404 real** con `ERR-RECEIPT-001-TICKET-NOT-FOUND`, no el 200-con-null del endpoint viejo. Pero **solo cubre "el ticket no existe"**: un ticket válido sin cobros devuelve 200 con `payments: []` y `totalAmount: 0`, y el `@for` de `<guest-receipt>` no tiene bloque `@empty`, así que pinta el encabezado y nada más.
+
+Front: `frontend-receipt` ruta `/ticket/:ticketUuid`. Lo consumen la Guest Page, `frontend-backoffice` (env `ticketReceiptsBaseUrl`) y valet por SMS en el checkout (`SmsService.getReceiptShortLink`, config `receipt-page.domain`).
 
 ## Recibo por gateway
 
@@ -59,6 +67,6 @@ La respuesta OK trae `receipt: { customerReceipt, customerReceiptWidth, paymentO
 
 - **`mobile_worker` (Android)** — el consumidor real. `BulkCheckOutValidateListFragment.kt:280` hace `receiptId = if (gateway == 1) paymentId else response.receiptId`, tomándolo del transaction-detail de valet. Su `receipt_journey/` manda el SMS.
 - **`ms-valet-service`** lo expone en `TransactionsDao.java:59` (`QUERY_GET_TRANSACTION_DETAIL`): `COALESCE(CASE WHEN gateway=2 THEN wt.uuid END, pgp.payment_gateway_payment_uuid)`. **No lo "arregles" para que devuelva `stripe_transaction.uuid`** — el fallback al uuid del ledger es justo lo que el lookup de Stripe espera. Se intentó el 2026-09-02 y se revirtió.
-- **Guest page** solo muestra recibo de Square, vía el `receiptUrl` que devuelve `pay-ticket`.
+- **Guest page** ya **no** usa este endpoint ni el `receiptUrl` de `pay-ticket`: linkea al recibo por ticket con `ticket.ticketUuid`. Ver [[feature_stripe_receipt_url]] en frontend/guest-page.
 
 Ver [[bug_sms_receipt_missing_gateways]].

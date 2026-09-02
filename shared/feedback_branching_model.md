@@ -28,8 +28,12 @@ Cuál es esa rama **depende del repo** — verificar en su `CLAUDE.md` o en el p
 | Repo | Rama de pruebas |
 |---|---|
 | `ms-*` (todos los microservicios) | `feature/staging` |
-| `frontend-guest-page` | `develop` |
+| `frontend-guest-page` | `feature/staging` (movido desde `develop` el 2026-09-02) |
 | `frontend-receipt` | `feature/staging` (pipeline `DEV_frontend-receipt`) |
+
+En `frontend-guest-page`, `develop` **ya no despliega nada**. El pipeline se movió a `feature/staging` y quedó verificado desplegando. `develop` sigue existiendo como rama de integración histórica, pero lo que llega a dev es `feature/staging`.
+
+**Cómo verificar qué está realmente desplegado**, sin depender de la consola de AWS: descargar `main.js` del CloudFront, sacar los nombres de chunk (`grep -oE '[A-Za-z0-9-]+-[A-Z0-9]{8}\.js'`), bajarlos y grepear un string que solo exista a partir del commit que te interesa. Un `last-modified` viejo o un chunk sin tu marcador dicen que el pipeline no corrió, y ahorra horas de dudar del propio código.
 
 Aun así conviene compilar y correr la suite antes de pushear: son ramas **compartidas**, y romperlas cuesta tiempo del equipo, no solo del que pushea.
 

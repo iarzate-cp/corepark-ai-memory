@@ -1,90 +1,110 @@
 ---
-name: Pending Work — corepark-ui integration (June 2026)
-description: In-progress and deferred tasks across design-system, frontend-commerce and frontend-backoffice repos, with branch context
-type: project
-originSessionId: f9e7fb09-1e99-4725-9385-00220b3b086c
+name: pending-work-estado-al-cierre-del-2026-08-31
+description: qué queda abierto por repo; sustituye el listado del 28 de agosto
+metadata: 
+  node_type: memory
+  type: project
+  originSessionId: 02d8be60-b4d7-4d73-99ae-4bda6564aa7f
+  modified: 2026-09-01T23:04:32.120Z
 ---
 
-## Design-system repo — branch: `develop`
+Reescrito el **2026-08-31**. El histórico de lo hecho vive en [[project_responsive_shell]], [[project_migration_status]], [[project_route_titles]] y [[project_backoffice_wrapper]]; esto es solo **lo que queda abierto**.
 
-### Completado (2026-06-01)
-- **`--cp-ui-*` prefix rename**: todas las CSS custom properties de la librería renombradas (430 ocurrencias en 31 archivos SCSS).
-- **`DateRangePickerComponent` — overnight toggle**: inputs `showOvernight` y `overnightValue` añadidos.
+## Transversal
 
-### Completado (2026-06-09) — cp-table en módulos + fix doble línea en charts
-- **`valet-overview` y `staff-roster`**: tablas migradas de `<table>` HTML crudo → `cp-table` + `CpCellDef`; estilos `.vo-table` / `.sr-table` eliminados
-- **`cp-stacked-bar-chart`**: fix doble línea en eje X — grid line a tick=0 eliminada (`@if tick > 0`) + borde movido a `border-top` en `.sbc__x-row`
-- **`cp-bar-chart`**: mismo fix — guard `@if (tick > 0)` en `<line class="grid-line">` del SVG para evitar overlap con `<line class="baseline">`
-- **Versión 0.0.13 publicada** en GitHub Packages
-- **`@corepark/corepark-ui`** bumpeado a `0.0.13` en frontend-commerce (con pnpm)
+**Estado al cierre del 2026-08-31.** Todo commiteado y empujado; los cuatro working trees limpios.
 
-### Completado (2026-06-02) — Primitivos + módulos Valet Dashboard
-- **`cp-avatar`**, **`cp-pill-group`**, **`cp-progress-bar`**, **`cp-pipeline`**, **`cp-bubble-chart`** — primitivos construidos
-- **5 módulos completos** en `lib/modules/`:
-  - `cp-module-location-occupancy` — grid de cards con donut + stats + leyenda
-  - `cp-module-volume-trends` — pill-group toggle + line/bar chart + stat cards
-  - `cp-module-valet-performance` — tabla con avatar + badge + progress bar + filtro por status
-  - `cp-module-ev-charging-queue` — pipeline + tabla con búsqueda y paginación
-  - `cp-module-duration-of-stay` — bubble chart + bar chart en grid 1fr 1fr
-- **Responsive design en todos los módulos**:
-  - `location-occupancy`: `≤1023px` → 2 cols (`min()` CSS); `≤639px` → 1 col + body apila verticalmente
-  - `volume-trends` / `duration-of-stay`: `≤1023px` → 2 cols; `≤639px` → 1 col
-  - `ev-charging-queue`: `overflow: hidden; min-width: 0` en el wrapper del pipeline para contener el scroll horizontal sin filtrar al page
-- **Versión 0.0.12 publicada** en GitHub Packages (`npm publish` desde `dist/corepark-ui/`) → actualizada a 0.0.13 en sesión 2026-06-09
+| Repo | Rama | Versión |
+|---|---|---|
+| design-system | `develop` | **`0.0.30` publicada** (2026-09-01) |
+| frontend-commerce | `feature/design-toggle` + `feature/staging` | `2026.8.31`, lib `0.0.29` |
+| frontend-backoffice | `feature/design-toggle` + `feature/staging` | **`2026.9.1`, lib `0.0.30`** |
+| frontend-validation | `feature/auth-layout-ds` + `feature/design-toggle` → `develop` | `2026.8.0` ⚠, lib `0.0.29` |
 
-### Pendiente — design-system
-- `sidebar-component.ts` Tailwind → BEM migration (branch `chore/sidebar-scss-migration`, deferred)
-- Spec files: 17+ archivos `*.spec.ts` sin commitear
+**`0.0.30`** lleva el trabajo de tabla de la migración de módulos del BO: `rowEmphasis`, `singleExpand`, el slot `[cpTableToolbar]` con `searchPlaceholder`, los dos arreglos de layout del toolbar, y los contornos de tarjeta a `text-200`. **Commerce y validation siguen en `0.0.29`** — no se han actualizado, y no lo necesitan salvo que quieran esas APIs.
 
----
+**Ninguna rama está mergeada a `main` en ningún repo.** GitHub ofrece abrir PR en todas.
 
-## Frontend-commerce repo — branch activo: `implementation/corepark-ui` (mergeado a HEAD)
+- **Los `.npmrc` de los tres consumidores llevan token en texto plano y trackeado en git.** Israel lo ha escalado repetidamente para meterlo en AWS y le han ignorado — **no es responsabilidad nuestra, no volver a sacarlo.**
+- **Nada del trabajo de diseño está verificado en pantalla más allá de lo que Israel comparó a mano.** El BO tiene su lista concreta en [[project_design_toggle_backoffice]]; commerce entero está sin ver.
+- `pnpm test` **no arranca en commerce** (falta `jest-environment-jsdom`, tampoco en `main`) y el **BO no tiene script de test**. La única suite que corre es la de la librería: 308 tests.
 
-### Completado (2026-06-02)
-- **Valet Dashboard page** (`/valet-dashboard`) construida con los 5 módulos de la librería
-- **Fix horizontal overflow** en layout del commerce:
-  - `.valet-content`: `min-width: 0; overflow-x: hidden` añadidos
-  - `.dashboard-section` + `.dashboard-row`: `min-width: 0` añadidos
-- **Nav — sección VALET**: item `Dashboard → /valet-dashboard` con `chart-pie-icon` añadido a `main-layout.component.ts`
-- **`ui-components` showcase** expandido con 6 secciones nuevas: Avatar, Alert, Progress Bar, Pill Group, Pipeline, Table
-- **`@corepark/corepark-ui`** bumpeado a `0.0.12` en `package.json`
-- **Conflicto de merge resuelto** en `main-layout.config.ts` y `main-layout.component.html`: HEAD tenía `password-user` (ACCESS CONTROL section); nuestra rama tenía `chart-pie` (VALET section) — se conservaron ambos
+## design-system — rama `develop`
 
-### Completado (2026-06-09)
-- **`@corepark/corepark-ui`** bumpeado a `0.0.13` vía pnpm; `pnpm-lock.yaml` actualizado
+### Bloqueante para el siguiente paso de responsive
 
-### Pendiente — commerce
-- *(sin pendientes activos)*
+- **Migrar `cp-menu` a overlay del CDK.** Hoy pinta su panel inline con `position: fixed`, lo que (a) lo deja atrapado en el contexto de apilamiento de su ancestro y (b) **bloquea meter container queries en el área de contenido**, que es lo correcto para `cp-table`, `stat-card` y los módulos. Ver [[project_responsive_shell]].
 
----
+### Deuda de la lib
 
-## Frontend-backoffice repo — branch: `develop`
+- **Contradicción tipográfica**: `CLAUDE.md` especifica page title 20px/700 y `cp-page-header` quedó en 24px/600. Decidir cuál manda ([[project_cp_page_header]]).
+- Gap del `cp-menu-item`: su `disabled` hace `stopPropagation()`, que **no** bloquea el `(click)` del consumidor. Hoy se blinda con un early return en cada consumidor; arreglarlo en el DS.
+- Eje **`GRAD`** de Roboto Flex sin habilitar. Son tres `index.html`.
+- Subtítulo de `cp-auth-layout` bajo WCAG AA en claro (~3.5:1).
+- El padding del subscript de `cp-form-field` quedó en `0.5rem`; el inset del campo es `0.75rem`.
+- **Rail icon-only para la banda 768–1024**: descartado a propósito (haría falta submenús flyout), es el siguiente paso natural si 32rem de contenido a 768px resulta estrecho.
 
-### Completado (2026-06-01) — Sesión 1: ticket-log CDK overlay
-- **`TicketLogDateFilter`** — CDK overlay con `cp-date-range-picker` inline
-- **`ticket-log.component.ts`** simplificado: eliminado `MatDialog`, `FullDateFilterLayoutState`
-- **`angular.json`** styles: `@corepark/corepark-ui/styles.css` añadido como primer entry
+### Cobertura de tests — `pnpm test:coverage` FALLA
 
-### Completado (2026-06-01) — Sesión 2: DateFilterButton + migración global de reportes
-- **`DateFilterButton`** — nuevo componente genérico en `shared/components/date-filter-button/`
-- **7 páginas de reportes migradas** de `MatDialog.open(FullDateFilterComponent)` → `DateFilterButton`
+Umbral del **80%** en `vite.config.mts`; la lib está en **57.3% stmts / 47.5% branches / 52.4% funcs / 58.5% lines**. `pnpm test` pasa porque no mide.
 
-### Completado (2026-06-01) — Sesión 3: mobile overlay + navegación mes/año + bug fixes picker
-- **`cp-date-range-picker`** — navegación mes/año/década (3 vistas: days → months → years)
-- **`DateFilterButton` + `TicketLogDateFilter` mobile**: migrados de `CdkConnectedOverlay` → `Overlay` service imperativo
-- **`cp-date-range-picker` responsive** (design-system): layout mobile en columna, presets grid 3 cols
+- **Dos exclusiones obsoletas en `vite.config.mts`**: `**/layout/**` es una **exclusión muerta** (esa ruta se movió a `layouts/shell-layout/`), y `**/tooltip/**` ahora se come también `directives/tooltip/`, que no era la intención.
+- **Los peores huecos están excluidos, no en 0%** — así que no aparecen en el informe: `dialog/**` (5 archivos, incluido `dialog-service`, la API imperativa más usada), `tooltip/**` (3), `select/**` (2), `date-range-picker/**` (2), `sidebar/**` (2), `notification-service` + `host`, charts bar/donut/line, `table/cell-def` + `expand-def`.
+- **A 0% con lógica real**, por valor: `time-picker` (66 líneas, la unidad más grande sin test), `menu-trigger-directive` + `menu-component` (46, y ahí vive el bug del `disabled`), `color-scheme-service` (21, de él depende el theming de las tres apps), `stacked-bar-chart` + `trend-chart` (47, **no están excluidos**, cuentan contra el umbral), los tres layouts, `modules/**` (9 componentes, ~160 líneas).
+- Orden de retorno recomendado: `color-scheme-service` → `menu` (y arreglar el bug del `disabled`) → `dialog-service` → `time-picker`. Los `modules/**` conviene **excluirlos explícitamente** en vez de fingir que se cubrirán.
+- Ya cubiertos y no hace falta volver: `cp-app-nav` (9 specs, nuevos), `cp-app-nav-bar` (12), `cp-page-header` (8).
 
-### Pendiente — backoffice
-- Reemplazar `mat-select` en `FilterDialogComponent` con `cp-select`
-- Migrar `DashboardComponent` de `MatDialog` → `DialogService`
-- Migración completa de todos los dialogs restantes de `MatDialog` → `DialogService`
-- Múltiples archivos con señales que aún usan `.getValue()` / `.asObservable()`
-- Migrar `full-date-filter.component.ts` internamente (aún usa `nxt-pick-datetime`)
+## frontend-backoffice — ramas `feature/design-toggle` y `feature/staging`
 
----
+El toggle de diseño y sus seis fallos visuales están en [[project_design_toggle_backoffice]]. La reconstrucción de módulos sobre la lib, en [[project_bo_module_migration]].
 
-## Decisiones arquitectónicas confirmadas
+### Migración de módulos — seis hechos, el resto sin empezar
 
-- **`wrapper-dialog` y `dialog-wrapper` NO migran a `cp-dialog-content` todavía** — son usados por ~60+ dialogs.
-- **`data-theme="dark"` NO va en `index.html` del backoffice** — área de contenido clara; tokens DS renderizan modo claro por defecto.
-- **`styles.css` del DS debe ir PRIMERO** en el array de styles de `angular.json`.
+Hechos: dashboard, `analytics/activity-by-rate-class`, `locations`, `locations/partners` (absorbe request points), `employee-center` (absorbe pin codes), `guest-settings/profiling`.
+
+**Sin reconstruir** — cada uno sigue con su entrada de ruta única, así que no urge nada: `analytics/trend`, `settings/*` (rates, stations, …), `reports/*`, `payments/*`, y las 46 hijas restantes de la raíz.
+
+**Tarea que Israel dejó para el final:** refactor de `daily-report-detail` (780 líneas, compartidas entre `/locations` y `daily-detail-dialog`). **Solo código, sin rediseño y sin módulo nuevo** — lo comparten los dos diseños, así que ni el comportamiento ni el markup visible cambian.
+
+**Deuda que deja la migración:**
+- Las tablas de pin codes y de coches **clásicas** (`pin-codes-table`, `guest-profile-cars`) quedan sin usar bajo el diseño nuevo, pero siguen sirviendo al clásico — no se borran.
+- **La contraseña del partner se muestra en claro y permanente** en la ficha. El clásico la enseñaba también, pero tras un clic. Enmascararla con revelar es decisión de producto: no se sabe si soporte la lee en voz alta.
+- Claves i18n nuevas solo en `en`/`es`: `REQUEST_POINTS.OF_PARTNER`, `PARTNERS.DETAIL.EDIT_BUTTON`, `PARTNERS.DETAIL.LOCALITY`, `PIN_CODES.LOADING`. `id.json` no tiene bloque `REQUEST_POINTS`.
+
+- **Sin usar y no borrados** (política establecida): `app-nav-mobile`, `app-nav` local, `app-nav-icon`, `hamburguer`, `main-layout`, `corepark-imagotype`, `auth-layout-bg.webp`, y los cuatro componentes de icono que usaba `user-settings` (`video-guides-icon`, `lang-icon`, `sign-out-icon`, `user-icon`).
+- **Traducciones por confirmar**: `NAVIGATION.MENU` y `NAVIGATION.ARIA_LABEL` en es/id las escribí yo (chrome, no copy de producto). `id.json` sigue casi sin bloque `NAVIGATION`, así que el nav en indonesio muestra claves crudas.
+- **`_router.scss`**: un `.loader-container` a z-index 1000 con `backdrop-filter`, que además de tapar el rail **crea bloque contenedor para `position: fixed`**.
+- **`styleComponent` del wrapper es inerte** (4 call sites).
+- **Material: 495 archivos.** El rail, la navegación móvil y auth están limpios; el lote natural es `form-field` (97) + `input` (91).
+- **NgModules: 61 archivos**, 50 componentes con `standalone: false`.
+- **NO tocar la familia de diálogos** (`wrapper-dialog` 259 usos, etc.) salvo de uno en uno.
+
+## frontend-commerce — ramas `feature/design-toggle` y `feature/staging`
+
+El toggle de diseño está en [[project_design_toggle_commerce]].
+
+- **`pms/connections` y `pms/arrivals-file` no migradas**: conservan su header a mano. Tienen `ownHeader: true`, así que no hay header doble.
+- `searchable-dropdown` (z-index 300) y `date-range-field` (400) son contenido de página **por encima** de la barra inferior en reposo (200): un panel abierto pintará sobre ella. Puede ser correcto; mirar en móvil.
+- **`page-label.component.ts`** es una tercera copia del árbol de rutas y solo lo usa el `main-layout` muerto. `MainLayoutState` y su `@HostListener('window:scroll')` también son de ahí.
+- Usa su propio `ColorSchemeState` en vez del `ColorSchemeService` del DS.
+
+## frontend-validation — ramas `feature/auth-layout-ds` y `feature/design-toggle`
+
+**`feature/design-toggle`** (2026-09-01) nació de `main` y mergeó `feature/auth-layout-ds`. **Empujada, y `develop` avanzó a su punta por fast-forward** hasta `3e24a86`: el toggle y el diseño nuevo ya no están aislados en una rama. Validation **no tiene `feature/staging`**; su rama de integración es `develop`. Ver [[project_design_toggle_validation]].
+
+- **Se quedó atrás en versionado**: sigue con el script del **contador** y en `2026.8.0`, o sea con una cadena con forma de fecha que no es la fecha. Traerle el script por día de commerce/BO es un `cp` — ver [[project_calver_apps]].
+- ~~**No tiene toggle de diseño.**~~ Lo tiene desde el 2026-09-01, pero **solo en `feature/design-toggle`**; `feature/auth-layout-ds` sigue migrada a la fuerza sin convivencia.
+
+- `CdkLayoutState.maxWidth` **mide el viewport, no el área de contenido**, así que en la banda 768–1030 va desajustado ahora que el rail ocupa ~248px ahí. Es el caso legítimo de container query — bloqueado por `cp-menu`.
+- `isBrowser` (1030px) de `CdkLayoutState` no lo usa ningún componente vivo, solo el `main-layout` muerto. El nombre además miente: mide ancho, no entorno.
+- El `<h6>Enter your ticket number</h6>` de `home` **duplica el subtítulo** de la ruta. Copy visible, decisión de Israel.
+- `request-car` y `overnight-report` no tenían cabecera: el header ahí es UI nueva, conviene mirarlo con ojo de diseño.
+- Los layouts viejos `main-layout` y `auth-layout` **no se borran** (decisión de Israel). Quedan los 3 fondos negros hardcodeados de `main-layout/ui/`.
+
+## frontend-valet-web
+
+**Fuera de todo esto por decisión de Israel. No proponer sincronizarlo.**
+
+## Versionado
+
+CalVer en las tres apps ([[project_calver_apps]]). Pendiente: **estampar el SHA corto** junto a la versión, y automatizar el bump.

@@ -32,3 +32,5 @@
 - [Divergence during merge+push is an obstacle, not a scope change](feedback_merge_push_divergence.md) — When user says "merge + push", resolve pull.ff-only failure by merging origin into local; only escalate on real conflicts
 - [Branching model — feature/staging shared, main is prod](project_branching_model.md) — feature/staging = shared CI/CD test env, safe to push anything. Direct merges to main are forbidden — PR only
 - [Decode ticket QR from a photo](reference_decode_ticket_qr_from_photo.md) — No zbarimg/pyzbar on this machine; use a throwaway Swift + CoreImage CIDetector script. Raw image decodes even dark/blurry photos
+- [Phone gate is survey-driven](project_phone_gate_is_survey_driven.md) — No "require phone" toggle exists; an active `company.survey` row → `location.hasSurvey` → phone required. Configured in Commerce → Settings → Survey
+- [Feature: URL de recibo Stripe en Guest Page](feature_stripe_receipt_url.md) — Link a receipts.corepark.com/{transactionReference} tras pagar con Stripe; el front ya tiene el id, bloquea el resolver de ms-payment-service

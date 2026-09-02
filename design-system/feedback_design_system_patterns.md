@@ -3,13 +3,21 @@ name: Design System — Technical Patterns & Gotchas
 description: Validated technical decisions, known pitfalls, and confirmed approaches for the corepark-ui library
 type: feedback
 originSessionId: 2a38666b-8ed5-4a8a-af67-066ed3e5a108
+modified: 2026-08-27T21:18:20.162Z
 ---
-## Never use Tailwind utilities inside the library
+## Tailwind está eliminado del repo entero (2026-08-27)
 
-ButtonDirective previously used Tailwind utility classes (`bg-primary`, `text-white`, etc.) requiring consumers to set up a `@theme` block. This was replaced with SCSS + CSS custom properties.
+Ya no es "no usar Tailwind en la librería" — **no existe en el proyecto**. Se borraron `tailwind.css`, `.postcssrc.json`, las devDeps `tailwindcss`/`@tailwindcss/postcss`/`postcss`, y la entrada de `angular.json`. Solo sobrevive en `node_modules/.pnpm` como *peer opcional* de los builders de Angular y ng-packagr; no es dependencia directa y no pesa en ningún bundle.
 
-**Why:** Tailwind utility classes require the consumer's Tailwind pipeline to know about the library's design tokens — a hidden dependency that breaks silently.
-**How to apply:** All visual styles in the library must use CSS custom properties (`var(--color-primary)`, `var(--radius-md)`, etc.). Never generate Tailwind class strings from library code.
+**Why:** el CSS de Tailwind vivía **solo en el demo** y nunca entraba en `ng-package.json` ni en `build:styles`. Los componentes de la librería que se estilaban con utilidades enviaban clases **sin CSS** a los consumidores — `cp-radio-*` estaba roto en commerce. Y el `@theme` del demo aliasaba `--color-*`, nombres muertos desde el rename a `--cp-ui-*`, así que el dark mode del demo vía utilidades tampoco funcionaba.
+**How to apply:** todo estilo va en `.scss` vía `styleUrl` con BEM `cp-<block>__<element>` + `is-*`, y todo valor sale de un token `--cp-ui-*`. Si hace falta una utilidad compartida, va al lenguaje del demo (`projects/demo/src/styles/_docs.scss`), nunca a la librería. Ver [[project_demo_docs_language]].
+
+## Al quitar Tailwind hay que reponer su preflight
+
+El demo dependía del reset de Tailwind sin declararlo. Vive ahora en `projects/demo/src/styles/_reset.scss`: `box-sizing`, márgenes 0 en headings/p/pre, listas sin bullets, `font: inherit` en controles, `border-collapse`, `display:block` en media.
+
+**Why:** sin él el layout se descuadra en silencio — márgenes UA en cada `<p>` y `<h2>` que antes traían `m-0`.
+**How to apply:** cualquier repo que quite Tailwind necesita este paso antes de mirar si "se ve igual".
 
 ## Always run build:fix-paths after ng-packagr build
 
@@ -62,3 +70,35 @@ Exception: `rgba(255,255,255,...)` on a solid primary-color background (e.g. pro
 
 **Why:** Consistent with existing component patterns in the library. Makes it easy to distinguish static modifiers from dynamic state in templates and SCSS.
 **How to apply:** Use `--` BEM modifier for variant/size inputs. Use `is-` state classes for states driven by user interaction or validation.
+
+## Los knobs del DS NO se sobreescriben desde un ancestro
+
+Descubierto el **2026-08-31**, tras un intento fallido que parecía correcto.
+
+Cada componente declara sus knobs **en su propio `:host`**:
+
+```scss
+:host { --cp-ui-brand-color: var(--cp-ui-color-text-950); }
+```
+
+Y **un valor que un elemento declara para sí mismo gana sobre el heredado** — la herencia solo rellena lo que el elemento no define. Así que esto **no hace nada**:
+
+```scss
+:host-context([data-design='legacy']) {   /* el host del consumidor */
+	--cp-ui-brand-color: var(--color-white);   /* ❌ silencioso */
+}
+```
+
+Hay que apuntar **al elemento del componente**:
+
+```scss
+:host-context([data-design='legacy']) cp-brand {   /* ✅ */
+	--cp-ui-brand-color: var(--color-white);
+}
+```
+
+Funciona porque el elemento vive en la plantilla del consumidor y lleva su atributo de encapsulación: el selector queda en 0,3,1 contra el 0,1,0 del `:host` de la librería.
+
+**Regla:** poner un knob en un ancestro solo sirve si el componente lo deja sin definir. Donde la librería envía un default —o sea, en todos— el selector tiene que casar con el elemento.
+
+**Y ojo con los inputs:** lo que es `input()` y no knob (p. ej. `isotypeColor` de `cp-brand`) CSS no lo alcanza de ninguna forma; hay que bindearlo. `cp-brand` tiene las dos cosas a la vez, así que arreglar solo una deja el lockup a medio pintar.

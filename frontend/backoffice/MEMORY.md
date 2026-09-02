@@ -36,3 +36,4 @@
 - [Damage photos — filename convention](project_damage_image_filename.md) — S3 `IMG_{ticket}_yyyy-MM-dd-HH-mm-ss-SSS` con hora local del dispositivo; pipe `damageImageDate` lo formatea con fallback a lastModified
 - [Activity Log — render contextual por status](project_activity_log_status_rendering.md) — RELOCATE from/to camina historial (`logRow ?? logSpot`); pipes por dato en `core/pipes/`; `logRate` viene con trailing space
 - [Ticket Log — columna Room Number](project_ticket_log_room_number.md) — Rama feature/ticket-log-room-number en backoffice + microservice-reports (ambas desde main); hotel_room lo llena PMS/Opera, 19.2% fill rate; backend primero en el deploy
+- [Training Videos — cómo añadir videos a la lista](reference_training_videos_list.md) — VIDEO_LIST en training-videos-page.videos.ts; label = último segmento del título de YouTube (oembed); la sección sale del segundo segmento

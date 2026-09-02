@@ -3,6 +3,7 @@ name: corepark-ui — Token System
 description: Complete design token definitions (SCSS CSS custom properties + JS exports) for corepark-ui — all tokens use --cp-ui-* prefix
 type: project
 originSessionId: f1d14aab-a36f-4dc1-b961-fde3c10a1821
+modified: 2026-09-01T20:50:57.208Z
 ---
 All tokens defined in `projects/corepark-ui/src/lib/tokens/`.
 `tokens.scss` imports all partials. Dark mode via `[data-theme='dark']`.
@@ -44,6 +45,15 @@ Note: uses `color-mix()` — requires modern browsers (Chrome 111+, Firefox 113+
 --cp-ui-color-text-200  light: #d7dbe0   dark: #4d4d4d
 --cp-ui-color-text-100  light: #edeef1   dark: #414141
 ```
+
+**Los dos últimos NO son intercambiables — regla fijada el 2026-09-01:**
+
+- **`text-200` = contorno de superficie.** El borde del aside de `cp-app-layout` y el de toda tarjeta: `cp-stat-card`, la raíz de `cp-table`, la tarjeta de notificación, la etapa de `cp-pipeline` y los módulos (`location-occupancy`, `duration-of-stay` ×2, `volume-trends`, `service-times`).
+- **`text-100` = divisor dentro de una superficie.** La regla del pie de una tarjeta, las líneas de fila de la tabla, los separadores de cabecera y pie de `cp-dialog-content`.
+
+Antes las tarjetas iban en `text-100` y el aside en `text-200`, así que el borde de una tarjeta se leía **más claro que el del chrome** — Israel lo cazó a ojo. `CLAUDE.md` documentaba el valor viejo en dos sitios y ya recoge la separación.
+
+**No se movieron y es a propósito:** el buscador y la paginación de dentro de `cp-table` (son controles de formulario, van con el borde en reposo de `cp-form-field`), y las superficies flotantes — `cp-menu`, panel de `cp-select`, contenedor de diálogo, date y time picker — cuyo borde se apoya en una sombra y hace otro trabajo.
 
 ### Status (same light + dark, each has -light / -dark / -alpha variants)
 ```
@@ -94,7 +104,13 @@ Base unit: 4px (0.25rem)
 --cp-ui-font-family-mono  'JetBrains Mono', 'Fira Code', monospace
 ```
 
-Font weights: `--cp-ui-font-weight-light/regular/medium/semibold/bold` → 300/400/500/600/700
+Font weights: `--cp-ui-font-weight-light/regular/medium/semibold/bold/black` → 300/400/500/600/700/**900**
+
+**`black: 900` se añadió el 2026-08-27.** Roboto Flex lleva el eje `wght` hasta 900, así que es un peso real y no un bold sintético — la escala se quedaba en 700 sin razón. Reservado para titulares display que tienen que destacar junto a un bold; a tamaño de cuerpo, bold y black juntos se leen como un glitch de renderizado, no como jerarquía.
+
+**`--cp-ui-font-size-paragraph-xs: 0.625rem` (10px)** también se añadió ese día: es el **suelo** de la escala. Solo para metadatos densos al lado de una etiqueta mayor (timestamps, unidades, notas de tabla). Nunca para prosa ni como único portador de significado. Trae su `--cp-ui-line-height-paragraph-xs: 1.6`.
+
+Ambos existen porque el puente de `frontend-validation` los colapsaba hacia dentro y aplanaba la jerarquía de la app — ver [[project_migration_status]].
 
 Font sizes:
 ```

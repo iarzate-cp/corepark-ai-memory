@@ -2,24 +2,32 @@
 
 > **Toda memoria debe replicarse a `~/Dev/corepark-ai-memory` antes de cerrar la sesión — ahí vive la verdad.** Ver [Espejo de memorias](feedback_memory_mirror.md).
 
+- [Responsive del shell](project_responsive_shell.md) — **empezar por aquí para cualquier tarea de responsive o de navegación**: rail a 768, cp-app-nav-bar de dos triggers, modelo de scroll, capas z, y por qué las container queries están bloqueadas por cp-menu
+- [Sesión 2026-08-27 — arco y orden](project_sesion_2026_08_27.md) — de quitar Tailwind a migrar el rail del BO; qué costó y por qué; método de verificación
 - [User Profile](user_profile.md) — Israel Arzate, senior Angular dev at Corepark, prefers full autonomy, writes in Spanish
 - [Design System Architecture](project_design_system.md) — build pipeline, dist layout, ng-packagr quirks, rsync workflow for local dev
 - [ButtonDirective — SCSS Migration](project_button_directive.md) — full .cp-btn SCSS, simplified hostClass(), BEM class map, specificity notes
 - [styles.scss — Single Import Contract](project_styles_entry.md) — how tokens were merged into styles.scss, consumer usage, frontend-commerce current state
 - [Working Style Preferences](feedback_working_style.md) — autonomy grants, terse summaries, Spanish chat / English code
-- [Design System Technical Patterns](feedback_design_system_patterns.md) — no Tailwind in library, build:fix-paths requirement, rsync workflow, BEM prefix cp-*
-- [Repository Paths & Key Files](reference_repos.md) — absolute paths to the THREE repos: design-system, frontend-commerce, frontend-backoffice
+- [Design System Technical Patterns](feedback_design_system_patterns.md) — Tailwind eliminado del repo entero, reponer su preflight, build:fix-paths, rsync workflow, BEM prefix cp-*
+- [Repository Paths & Key Files](reference_repos.md) — rutas absolutas de los CUATRO repos (design-system, commerce, validation, backoffice) + abreviaturas que usa Israel (CMRS, PRN, BO)
 - [corepark-ui Component API](project_corepark_ui_components.md) — selector, inputs, outputs y comportamiento clave de cada componente/directiva
 - [corepark-ui Token System](project_corepark_ui_tokens.md) — definición completa de tokens SCSS (colores, spacing, tipografía, radius, shadows, z-index, grid)
-- [Pending Work](project_pending_work.md) — branches activos, cambios sin commit, tareas pendientes por repo (design-system: `develop`, backoffice: `refactor/ticket-log`)
+- [Pending Work](project_pending_work.md) — lo que queda abierto por repo (DS `develop`, BO `feature/app-layout`, commerce y validation `feature/auth-layout-ds`); incluye el estado de cobertura y por qué `test:coverage` falla
 - [Migración de layouts — estado 2026-08-26](project_migration_status.md) — qué está hecho por repo, ramas, y el riesgo de que un `pnpm install` limpio revierta el build local
 - [Categorías de primer nivel y layouts](project_layouts_category.md) — lib/layouts, lib/services; la ubicación física define la categoría; deuda de lib/directives
-- [cp-app-layout + cp-app-nav + footer](project_cp_app_layout.md) — API, knobs, modelo de padding por bloque, acordeón del menú, cpNavAction
+- [cp-app-layout + la familia app-nav](project_cp_app_layout.md) — API y knobs actuales de shell, rail, barra móvil y footer; padding por bloque; isOpen vs isGroupActive; cpNavAction
+- [cp-brand — lockup de marca del rail](project_cp_brand.md) — wordmark + isotipo + nombre de proyecto; unifica los .brand a mano de las 3 apps; por qué no tiene slot de marca blanca
 - [cp-auth-layout](project_cp_auth_layout.md) — API, knobs por tema, y la técnica @property para animar gradientes
-- [Gotchas de Angular y tooling](feedback_angular_gotchas.md) — proyección vs @if, atributos que no fallan, pnpm minimumReleaseAge, orden de styles
+- [Signals antes que observables](feedback_signals_over_observables.md) — router.lastSuccessfulNavigation en Angular 21, por qué currentNavigation no sirve, y matchMedia en vez de rastrear resize
+- [inject() en dos pasos](feedback_inject_two_steps.md) — nunca `inject(X).prop` en un campo; inyectar a `#campo` privado arriba y derivar después
+- [Gotchas de Angular y tooling](feedback_angular_gotchas.md) — proyección vs @if en los DOS lados (consumidor y componente), atributos que no fallan, backticks en templates inline, pnpm minimumReleaseAge, orden de styles
 - [Espejo de memorias](feedback_memory_mirror.md) — corepark-ai-memory es la fuente de verdad; mapeo de carpetas y cómo replicar
-- [Commit Scope](feedback_commits.md) — solo commitear en el design system, nunca en el backoffice
+- [Commit scope y publicación](feedback_commits.md) — se commitea en los cuatro repos (la regla vieja quedó obsoleta); no empujar por iniciativa propia; la secuencia completa de publicar la lib
 - [Package Manager — siempre pnpm](feedback_package_manager.md) — nunca npm, en ningún repo
+- [Lockfiles — el .gitignore estaba al revés](feedback_lockfiles.md) — pnpm-lock.yaml ignorado y package-lock.json trackeado; corregido, revisar en los otros repos
+- [pnpm add borra el sync del DS](feedback_pnpm_add_borra_el_sync.md) — cualquier install en un consumidor revierte corepark-ui al registro; re-sincronizar y verificar siempre después
+- [cp-form-field disabled + el bug de errorFor](project_form_field_disabled.md) — grayscale con doble trigger; form.disable() deja valid E invalid en false y pintaba errores falsos
 - [CDK Overlay Animated Panel Pattern](project_cdk_overlay_pattern.md) — enter/exit animations con ComponentRef + setTimeout + CSS classes
 - [Import Paths — @corepark/corepark-ui](feedback_import_paths.md) — usar siempre @corepark/corepark-ui, nunca subpaths de CLAUDE.md
 - [Backoffice Dialog Wrappers](feedback_backoffice_dialog_wrappers.md) — wrapper-dialog/dialog-wrapper NO migran a cp-dialog-content por lote; migrar dialog a dialog individualmente
@@ -29,3 +37,16 @@
 - [Módulos Feature Plan](project_modules_feature.md) — capa lib/modules/ completa; 5 módulos del Valet Dashboard construidos y con responsive design
 - [Repo Names — Commerce vs Backoffice](feedback_repo_names.md) — frontend-commerce ≠ frontend-backoffice; no confundirlos
 - [frontend-validation Token Namespace](feedback_frontend_validation_tokens.md) — usar --cp-ui-color-* no --color-bg/text-*; body es oscuro por normalizer.scss
+- [El repo es solo librería](project_repo_is_library_only.md) — projects/demo BORRADO; no hay `pnpm dev` ni verificación visual en el repo; el ciclo es build + sync a la app real
+- [Lenguaje de estilos del demo](project_demo_docs_language.md) — HISTÓRICO (el demo ya no existe): clases .doc-*, componentes de documentación, truco de especificidad para layouts fixed
+- [Tokens muertos --color-*](project_dead_color_tokens.md) — RESUELTO; tokens/index.ts reescrito, DARK→DARKER; se conserva por el patrón de fallo (var() inválido falla en silencio)
+- [Versionado CalVer de las apps](project_calver_apps.md) — **YYYY.M.D** (día real, corregido el 31/08; el contador mentía la fecha); la librería sigue en SemVer; no hay CI que lo estampe
+- [Toggle de diseño en el backoffice](project_design_toggle_backoffice.md) — gate por operador (1 y 2, abierto fuera de prod), dos shells por `@if`, auth legacy con Material, y **los seis fallos visuales que solo salieron comparando DEV con producción**
+- [Migración de módulos del BO](project_bo_module_migration.md) — **leer antes de reconstruir cualquier módulo del backoffice**: ruta duplicada + `newDesignGuard`, qué se reutiliza, la forma según la cardinalidad del padre, y ocho trampas que ya costaron un build
+- [Toggle de diseño en validation](project_design_toggle_validation.md) — réplica del BO en `feature/design-toggle`; el gate a operadores 1 y 2, `canMatch` en vez de shells, y los tres detalles de revertir el puente de tokens (`initial` vs `revert`)
+- [Toggle de diseño en commerce](project_design_toggle_commerce.md) — los dos diseños conviven: initializer + canMatch + gating CSS **opt-in** + reload; `feature/design-toggle` es la rama que va a prod
+- [Ramas y staging](feedback_branching_staging.md) — staging es sumidero: NUNCA desprender una rama de ahí ni mergearla a otra; la referencia de "qué va a prod" es `main`
+- [cp-page-header](project_cp_page_header.md) — API, slots, el límite de proyección del header en el shell, y por qué 600 + tracking cerrado
+- [Títulos desde la ruta](project_route_titles.md) — TitleStrategy en las 3 apps, formato `Página | Sección | CorePark - X`, y la trampa de herencia de `data`
+- [El wrapper del BO es único](project_backoffice_wrapper.md) — absorbió rp/pin-codes/payments con `context` + slot `[meta]`; los de diálogo NO se tocan
+- [Marca y copy](feedback_brand_and_copy.md) — se escribe CorePark; títulos en title case; el copy de producto no se inventa

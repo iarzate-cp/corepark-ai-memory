@@ -1,10 +1,25 @@
 ---
 name: Repository Paths & Key Files
-description: Absolute paths to all three repos and their most important files
+description: Absolute paths to the four repos, their most important files, and the abbreviations Israel uses for them
 type: reference
 originSessionId: 2a38666b-8ed5-4a8a-af67-066ed3e5a108
-modified: 2026-08-27T03:55:11.080Z
+modified: 2026-08-31T20:37:21.613Z
 ---
+## Cómo se refiere Israel a cada repo
+
+Usa abreviaturas de esqueleto consonántico y también el nombre del producto. Anotado el 2026-08-31 tras tener que inferir "sync con CMRS y PRN":
+
+| Dice | Es | Producto | Sync |
+|---|---|---|---|
+| **BO** | `frontend-backoffice` | BackOffice | `sync:backoffice` |
+| **CMRS**, CRM, commerce | `frontend-commerce` | CRM | `sync:commerce` |
+| **PRN**, Partner, validation | `frontend-validation` | Partner | `sync:validation` |
+| DS, la lib | `design-system` | corepark-ui | — |
+
+Ojo: **el producto y el repo no se llaman igual** en commerce y validation — el repo es `frontend-commerce` pero el producto es "CRM", y `frontend-validation` es "Partner". Ver [[feedback_repo_names]].
+
+`frontend-valet-web` existe pero está **fuera** de la migración por decisión de Israel.
+
 ## Design System repo
 
 - **Root:** `/Users/israel/Dev/design-system`

@@ -3,6 +3,7 @@ name: Working Style Preferences
 description: Validated patterns for how to collaborate with Israel — autonomy, scope, communication
 type: feedback
 originSessionId: 2a38666b-8ed5-4a8a-af67-066ed3e5a108
+modified: 2026-08-29T00:14:46.663Z
 ---
 ## Give full autonomy when authorized
 
@@ -17,6 +18,14 @@ End responses with a clear status (done/blocked) and what's next — not a recap
 
 **Why:** Confirmed by user acceptance without pushback on concise responses.
 **How to apply:** After completing a task, 1–2 sentence wrap-up max. Detailed context goes in commit messages or comments, not in chat.
+
+## Las reglas de CLAUDE.md aplican en las apps consumidoras, no solo en el DS
+
+Israel me corrigió el **2026-08-28** por escribir un `for` con `let` y `unshift` dentro de `frontend-backoffice`. El `CLAUDE.md` vive en el repo del design system, pero sus reglas (`const` siempre, sin mutación, `map/filter/reduce` sobre bucles, sin `any`, `#private`) rigen en los cuatro repos.
+
+**Why:** es un solo producto con un solo estilo de casa; el archivo dice "any code in the Corepark dashboard".
+
+**How to apply:** antes de dar por buena una función nueva en cualquier repo, releerla buscando `for`, `let` y mutación. Recorrer una lista enlazada (`firstChild`) sale más limpio recursivo, y además queda consistente con los helpers que ya existen.
 
 ## Spanish in chat, English in code
 

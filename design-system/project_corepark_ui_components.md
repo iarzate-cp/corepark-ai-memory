@@ -3,13 +3,26 @@ name: corepark-ui — Component & Directive API Surface
 description: Selector, inputs, outputs and key behavior of every component/directive in the library
 type: project
 originSessionId: e29b3d2a-0295-4627-818f-8e980d288b27
+modified: 2026-09-01T23:03:23.014Z
 ---
 ## Entry point: `src/public-api.ts`
 
-All exports flow through two barrels:
+Sibling first-level categories under `lib/` — see [[project_layouts_category]]:
 - `lib/tokens` → JS token constants
-- `lib/components` → all components, directives, services
-- `lib/directives`, `lib/pipes`, `lib/utils` → currently empty stubs
+- `lib/components` → leaf UI components and their services
+- `lib/directives` → `cpButton`, `cpInput`, `cpRipple`, `cpTooltip` (populated 2026-08-27)
+- `lib/layouts` → `cp-app-layout`, `cp-auth-layout`, `cp-shell-layout`
+- `lib/services` → `ColorSchemeService`, `provideColorScheme`
+- `lib/modules` → dashboard modules
+
+`lib/pipes` and `lib/utils` **were deleted** (empty stubs with a public subpath resolving to nothing).
+
+> **Not documented here:** the navigation family — `cp-app-layout`, `cp-app-nav`,
+> `cp-app-nav-bar`, `cp-app-nav-footer` and `[cpNavAction]` — lives in
+> [[project_cp_app_layout]], with the responsive behaviour and its hazards in
+> [[project_responsive_shell]]. Also elsewhere: `cp-brand` ([[project_cp_brand]]),
+> `cp-page-header` ([[project_cp_page_header]]), `cp-auth-layout`
+> ([[project_cp_auth_layout]]).
 
 ---
 
@@ -193,23 +206,38 @@ setPosition(position: NotificationPosition): void
 
 ### CpTableComponent — `cp-table`
 ```ts
-columns:         TableColumn[] (required)
-rows:            unknown[]     = []
-pageSize:        number        = 25
-pageSizeOptions: number[]      = [10,25,50,100]
-collapsible:     boolean       = false
-filterable:      boolean       = true
-serverSide:      boolean       = false
-loading:         boolean       = false
-emptyMessage:    string        = 'No hay datos'
+columns:          TableColumn[] (required)
+rows:             unknown[]     = []
+pageSize:         number        = 25
+pageSizeOptions:  number[]      = [10,25,50,100]
+collapsible:      boolean       = false
+singleExpand:     boolean       = false   // 0.0.30
+rowClickToggles:  boolean       = true
+filterable:       boolean       = true
+searchPlaceholder: string       = 'Search...'   // 0.0.30
+serverSide:       boolean       = false
+loading:          boolean       = false
+emptyMessage:     string        = 'No hay datos'
+rowEmphasis:      (row) => boolean = () => false   // 0.0.30
 // outputs:
 sortChange:   EventEmitter<TableSort>
 pageChange:   EventEmitter<TablePage>
 filterChange: EventEmitter<string>
 ```
 `TableColumn = { key, label, sortable?, align?, width?, hideBelow? }`
-- Custom cell templates via `CpCellDef` directive: `<ng-template cpCell="key" let-row>`
-- Custom expand template via `CpExpandDef` directive: `<ng-template cpExpand let-row>`
+- Plantilla de celda: `<ng-template cpCell="key" let-row>` (directiva `CpCellDef`)
+- Plantilla de expansión: `<ng-template cpExpand let-row>` (directiva `CpExpandDef`)
+- **Slot en el toolbar** (0.0.30): `<button cpTableToolbar …>` — controles junto al buscador, empujados al extremo derecho por el propio componente
+
+**Lo que hay que saber, añadido el 2026-09-01:**
+
+- **`rowEmphasis` es un predicado, no un resolvedor de clases.** Un consumidor que devuelve nombres de clase acaba estilando los internos del componente desde fuera, y esos nombres no son API. El modificador es **regla superior + semibold, no relleno**: la fila destacada suele ser un total bajo lo que suma, y un fondo competiría con hover y expanded. Se aplica al `<tr>` **y a la tarjeta móvil**.
+- **`singleExpand` es opt-in** porque varias filas abiertas permiten comparar, y la página de survey de commerce ya depende de ello. Actívalo cuando el contenido expandido sea pesado (una petición por fila, un formulario).
+- **`cp-table` NO emite evento al expandir.** La forma de cargar bajo demanda es que la plantilla `cpExpand` instancie un componente que pida en su propia construcción — solo se instancia para filas abiertas. Al colapsar se destruye, así que reabrir vuelve a pedir.
+- **Las filas abiertas se guardan por referencia al objeto.** Si `rows` es un `computed` que mapea, cada recálculo crea objetos nuevos y la fila abierta se cierra sola.
+- **`.cp-table-root` es `overflow: hidden`.** Un `cp-menu` dentro de la tabla queda recortado, porque pinta su panel inline. El `<cp-menu>` va fuera; la referencia de plantilla cruza igual.
+- **El toolbar solo aparece si `filterable`.** Lo proyectado en `[cpTableToolbar]` desaparece con él.
+- Bajo 640px la tabla pasa a **tarjetas**; `hideBelow: 'md'` oculta a <768 y `'sm'` a <640.
 - Expandable rows with animation; client-side or server-side mode
 
 ### StatCardComponent — `cp-stat-card`

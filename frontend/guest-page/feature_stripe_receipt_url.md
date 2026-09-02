@@ -6,6 +6,14 @@ metadata:
 ---
 Arrancó el 2026-09-02. Objetivo: que el usuario que paga con Stripe en la guest page tenga una URL donde ver lo que pagó — hoy solo Square muestra recibo.
 
+## Dónde vive el link (decidido 2026-09-02)
+
+**En la página del ticket**, entre el bloque de acciones y el QR, **fuera** de la bifurcación de `temporalCheckout` — un huésped en "See you soon!" ya pagó y es el más probable de querer su recibo. Gateado solo con `@if (receiptUuid())`, así que aparece en cualquier ticket con algo cobrado, de cualquier gateway, sin haber pagado en esa sesión.
+
+Sigue apareciendo además en `PaidTicketDialog` y `CarDeliveredDialog`. **No** vive en el branch de `showUnlockGate()`, que reemplaza toda la página.
+
+Por qué no basta con los diálogos: en las locations con `allowRequest` el flujo post-pago muestra un snackbar y nunca abre diálogo, así que el link jamás se veía. Eso ya pasaba con Square antes de este cambio.
+
 ## Decisión tomada
 
 El link apunta a **`https://receipts.corepark.com/{transactionReference}`** (nuestra app de recibos), y la app redirige a `pay.stripe.com` cuando `paymentOperator` es `STRIPE`. Un solo dominio para todos los gateways; Square queda como la excepción histórica.

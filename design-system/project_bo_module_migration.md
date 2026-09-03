@@ -100,6 +100,24 @@ Cuatro veces la respuesta correcta fue **añadir a la lib, no parchear el consum
 | `/locations/partners` (+ request points) | `a2bb6f05` | una página con selector |
 | `/employee-center` (+ pin codes) | `20086756` | fila expandible |
 | `/guest-settings/profiling` | `b9cd3e5b` | fila expandible con tabla anidada |
+| `/settings/rates` | `db94957e`…`55d2511c` | fila expandible; **cero Material**; ver [[project_ds_rates]] |
+| `/settings/stations` | `d19e3f42` | contenedores + diálogos + snackbar |
+| `/settings/tipping` | `0c633145` | contenedores + controles + snackbar; **la cabecera la pinta el shell** |
+
+## El alcance no tiene que ser el módulo entero
+
+Rates fue completo. **Stations y tipping fueron «contenedores, diálogos y snackbar»** por decisión de Israel, y salió mejor: módulos cortos, riesgo acotado, y el clásico intacto igual. No hay que reconstruirlo todo para sacar Material de un módulo.
+
+## `ownHeader`: significa lo contrario de lo que parece
+
+`app-layout.component.html` es `@if (heading() && !ownHeader())`. O sea:
+
+- **sin bandera** (default `true`) → **la página pinta su cabecera**. Es lo que hace falta si hay un control arriba, porque una cabecera del shell no recibe contenido proyectado.
+- **`data: { ownHeader: false }`** → **la pinta el shell**. Solo si la página no tiene acciones.
+
+Me lo salté en `ds-rates`: puse la bandera *y* pinté la mía, y salieron las dos, cada una con su `page-meta-row`. `ds-tipping` es el primero que la usa de verdad.
+
+Y el heading **sale de la ruta** vía `TranslatedTitleStrategy.heading` / `.subheading`. La ubicación **no** va en el texto: ya la nombra el selector de parking del `page-meta-row`.
 
 ## Sin verificar
 

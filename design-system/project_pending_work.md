@@ -12,7 +12,26 @@ Reescrito el **2026-08-31**. El histórico de lo hecho vive en [[project_respons
 
 ## Transversal
 
-**Estado al cierre del 2026-08-31.** Todo commiteado y empujado; los cuatro working trees limpios.
+## Estado al cierre del 2026-09-03
+
+**Sesión larga: sacar Material del BO módulo a módulo.** Ver [[project_material_to_corepark_ui]].
+
+| Repo | Rama | Sin empujar | Versión |
+|---|---|---|---|
+| design-system | `develop` | **7 commits** | `0.0.30`, **sin bumpear a propósito** |
+| frontend-backoffice | `feature/design-toggle` | **7 commits propios** (+ merges de `main`) | `2026.9.1` |
+
+⚠️ **Las tres apps corren contra el `dist` sincronizado por rsync en `node_modules`, que reporta `0.0.30` — la misma versión que hay publicada, pero con siete commits de diferencia.** Cualquier `pnpm install` lo revierte al del registro y se lleva por delante los CVA, los dos campos nuevos y los arreglos de `cp-form-field`, en silencio. Israel pidió no bumpear hasta cerrar, para no ir subiendo versiones.
+
+**`origin/main` avanzó**: PR #75 (el toggle y el shell) y #76 (los seis módulos) ya están en producción. `feature/design-toggle` absorbió `main` y va 3 commits por delante.
+
+**`ds-rates` está roto** y no hay lista. Ver [[project_ds_rates]].
+
+**Nada de esta sesión se ha visto en pantalla** salvo dos capturas que mandó Israel (cabecera duplicada en rates, label pisado en el campo de hora), las dos arregladas. Quedan sin mirar: los 15 diálogos de rates, `ds-stations`, `ds-tipping`, `cp-time-field`, `cp-date-range-field`, `cp-menu` en overlay, y los 51 campos `[error]` de las tres apps que ahora esperan al blur.
+
+**El BO no tiene runner de tests.** Ni vitest, ni karma, ni jasmine. Hay 11 ficheros `.spec.ts` en el repo que no pueden correr, incluidos los 34 tests de `rate-detail-fields`. La única suite que corre es la de la lib: **394 tests** (eran 311).
+
+### Estado anterior, al cierre del 2026-08-31
 
 | Repo | Rama | Versión |
 |---|---|---|

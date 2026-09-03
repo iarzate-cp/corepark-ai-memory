@@ -43,6 +43,10 @@
 - [Versionado CalVer de las apps](project_calver_apps.md) — **YYYY.M.D** (día real, corregido el 31/08; el contador mentía la fecha); la librería sigue en SemVer; no hay CI que lo estampe
 - [Toggle de diseño en el backoffice](project_design_toggle_backoffice.md) — gate por operador (1 y 2, abierto fuera de prod), dos shells por `@if`, auth legacy con Material, y **los seis fallos visuales que solo salieron comparando DEV con producción**
 - [Migración de módulos del BO](project_bo_module_migration.md) — **leer antes de reconstruir cualquier módulo del backoffice**: ruta duplicada + `newDesignGuard`, qué se reutiliza, la forma según la cardinalidad del padre, y ocho trampas que ya costaron un build
+- [Quitar Material del backoffice](project_material_to_corepark_ui.md) — **el ejercicio actual**: censo de los 504 ficheros por paquete, equivalencias, huecos reales, y el orden por dependencia
+- [La familia de campos de corepark-ui](project_corepark_ui_form_fields.md) — el CVA que faltaba, `cp-time-field`, `cp-date-range-field`, y los dos cambios de comportamiento de `cp-form-field` que llegan a 51 campos de tres apps
+- [ds-rates](project_ds_rates.md) — rebuild completo sin Material; **está roto y no hay lista**; los 8 defectos del clásico que mueren con él
+- [El rediseño va solo en el diseño nuevo](feedback_redesign_solo_new_design.md) — ruta única = sirve al clásico; las dos excusas con las que me salté la regla y el test de una línea para no repetirlo
 - [Toggle de diseño en validation](project_design_toggle_validation.md) — réplica del BO en `feature/design-toggle`; el gate a operadores 1 y 2, `canMatch` en vez de shells, y los tres detalles de revertir el puente de tokens (`initial` vs `revert`)
 - [Toggle de diseño en commerce](project_design_toggle_commerce.md) — los dos diseños conviven: initializer + canMatch + gating CSS **opt-in** + reload; `feature/design-toggle` es la rama que va a prod
 - [Ramas y staging](feedback_branching_staging.md) — staging es sumidero: NUNCA desprender una rama de ahí ni mergearla a otra; la referencia de "qué va a prod" es `main`

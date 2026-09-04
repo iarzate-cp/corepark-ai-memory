@@ -21,7 +21,7 @@
 - [cp-auth-layout](project_cp_auth_layout.md) — API, knobs por tema, y la técnica @property para animar gradientes
 - [Signals antes que observables](feedback_signals_over_observables.md) — router.lastSuccessfulNavigation en Angular 21, por qué currentNavigation no sirve, y matchMedia en vez de rastrear resize
 - [inject() en dos pasos](feedback_inject_two_steps.md) — nunca `inject(X).prop` en un campo; inyectar a `#campo` privado arriba y derivar después
-- [Gotchas de Angular y tooling](feedback_angular_gotchas.md) — proyección vs @if en los DOS lados (consumidor y componente), atributos que no fallan, backticks en templates inline, pnpm minimumReleaseAge, orden de styles
+- [Gotchas de Angular y tooling](feedback_angular_gotchas.md) — proyección vs @if en los DOS lados, atributos que no fallan, backticks en templates inline (incluidos comentarios HTML), **un computed solo recomputa sobre señales** (FormControl y translate.instant no lo son), pnpm minimumReleaseAge, orden de styles
 - [Espejo de memorias](feedback_memory_mirror.md) — corepark-ai-memory es la fuente de verdad; mapeo de carpetas y cómo replicar
 - [Commit scope y publicación](feedback_commits.md) — se commitea en los cuatro repos (la regla vieja quedó obsoleta); no empujar por iniciativa propia; la secuencia completa de publicar la lib
 - [Package Manager — siempre pnpm](feedback_package_manager.md) — nunca npm, en ningún repo
@@ -45,7 +45,9 @@
 - [Migración de módulos del BO](project_bo_module_migration.md) — **leer antes de reconstruir cualquier módulo del backoffice**: ruta duplicada + `newDesignGuard`, qué se reutiliza, la forma según la cardinalidad del padre, y ocho trampas que ya costaron un build
 - [Quitar Material del backoffice](project_material_to_corepark_ui.md) — **el ejercicio actual**: censo de los 504 ficheros por paquete, equivalencias, huecos reales, y el orden por dependencia
 - [La familia de campos de corepark-ui](project_corepark_ui_form_fields.md) — el CVA que faltaba, `cp-time-field`, `cp-date-range-field`, y los dos cambios de comportamiento de `cp-form-field` que llegan a 51 campos de tres apps
-- [ds-rates](project_ds_rates.md) — rebuild completo sin Material; **está roto y no hay lista**; los 8 defectos del clásico que mueren con él
+- [ds-rates](project_ds_rates.md) — rebuild completo sin Material; los 4 fallos del rebuild ya corregidos y el panel de duración devuelto; los 8 defectos del clásico que mueren con él
+- [ds-lodging](project_ds_lodging.md) — tabla con fila expandible y un diálogo para alta y edición; el foco de la unidad nueva que quité sin querer
+- [ds-spot-configuration](project_ds_spot_configuration.md) — acordeón reconstruido; LAYOUT_SHAPE mata el enum SpotConfig; **los 2 mapeos invertidos siguen vivos en el clásico**; 1 631 líneas muertas que se dejan a propósito
 - [El rediseño va solo en el diseño nuevo](feedback_redesign_solo_new_design.md) — ruta única = sirve al clásico; las dos excusas con las que me salté la regla y el test de una línea para no repetirlo
 - [Toggle de diseño en validation](project_design_toggle_validation.md) — réplica del BO en `feature/design-toggle`; el gate a operadores 1 y 2, `canMatch` en vez de shells, y los tres detalles de revertir el puente de tokens (`initial` vs `revert`)
 - [Toggle de diseño en commerce](project_design_toggle_commerce.md) — los dos diseños conviven: initializer + canMatch + gating CSS **opt-in** + reload; `feature/design-toggle` es la rama que va a prod

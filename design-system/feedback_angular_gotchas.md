@@ -159,4 +159,51 @@ La alternativa —que cada consumidor repita la regla de colocación— es exact
 
 Las entidades solo se decodifican escritas como markup en la plantilla. Dentro de un literal de TypeScript son texto y nada más. **El build no dice nada**; se ve en pantalla.
 
+## Un `computed` solo recomputa si sus dependencias son señales
+
+Obvio dicho así, y aun así me colé dos veces el **2026-09-04** construyendo `ds-lodging` y `ds-spot-configuration`. El build no dice nada: es correcto TypeScript y correcto Angular, simplemente se evalúa una vez y se queda con ese valor para siempre.
+
+**Caso 1 — `computed` sobre un `FormControl`.**
+
+```ts
+readonly partnerError = computed(() =>          // ❌ se cachea con lo que dijera al primer render
+  this.form.controls.partnerId.invalid ? 'Required' : ''
+)
+```
+
+Un `FormControl` no es una señal. Va como **método**, que la plantilla vuelve a llamar en cada ciclo de detección. Es la contraparte de [[feedback_signals_prefer_computed]]: derivado de señales → `computed`; derivado de un form → método.
+
+Mismo motivo por el que `errorOn: 'blur'` de `cp-form-field` va por el `focusout` del campo y no por `control.touched`.
+
+**Caso 2 — `computed` con `translate.instant`.**
+
+```ts
+readonly columns = computed<TableColumn[]>(() => [   // ❌ cachea el idioma del primer render
+  { key: 'partner', label: this.#translate.instant(KEY) },
+])
+```
+
+El **pipe** `translate` se re-renderiza al cambiar de idioma porque se suscribe; `instant` es una llamada plana. Con el selector de idioma puesto en español, las columnas se quedan en inglés para siempre.
+
+Y no siempre se puede usar el pipe: estos strings son **inputs de `cp-table` / `cp-select`**, no nodos de texto.
+
+**Arreglo: hacer el idioma una dependencia explícita.**
+
+```ts
+readonly #lang = toSignal(this.#translate.onLangChange)
+
+readonly columns = computed(() => {
+  this.#lang()                                   // solo para depender de él
+  return [{ key: 'partner', label: this.#translate.instant(KEY) }]
+})
+```
+
+**Dónde mirar:** cualquier `computed` cuyo cuerpo no lea ninguna señal. Si dentro solo hay `this.form.…`, `this.#translate.instant(…)` o un objeto inyectado constante, o sobra el `computed` o le falta una dependencia.
+
+## Los backticks del punto 7 vuelven a morder
+
+Volví a caer el **2026-09-04**, esta vez en un **comentario HTML** dentro del `template:` de `ds-lodging-dialog`: `<!-- Add unit vive en \`ds-unit-fields\` -->`. Quince errores de parseo, ninguno señalando el comentario.
+
+O sea que la regla no es «nada de backticks en comentarios de estilo markdown», es **nada de backticks dentro de un template literal, punto** — incluidos los comentarios HTML, que es donde apetece escribirlos.
+
 Ver [[feedback_package_manager]], [[project_migration_status]] y [[project_bo_module_migration]].

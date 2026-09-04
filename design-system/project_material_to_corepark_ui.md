@@ -63,13 +63,21 @@ Encuadre que dio Israel el **2026-09-03**: «el ejercicio ahora es básicamente 
 
 | Módulo | Alcance | Commit |
 |---|---|---|
-| `settings/rates` → `ds-rates` | **completo**, cero Material | `db94957e` … `55d2511c` |
+| `settings/rates` → `ds-rates` | **completo**, cero Material | `db94957e` … `55d2511c`, arreglos `b16ea68e`/`d7a2c11f`/`860d2433` |
 | `settings/stations` → `ds-stations` | contenedores + diálogos + snackbar | `d19e3f42` |
 | `settings/tipping` → `ds-tipping` | contenedores + controles + snackbar | `0c633145` |
+| `settings/lodging` → `ds-lodging` | **completo** — tabla, fila expandible, 2 diálogos | `67cf11ff` |
+| `settings/spot-configuration` → `ds-spot-configuration` | **completo** — acordeón, 1 tarjeta, 1 diálogo | `0a09f54f` |
 
-**`ds-rates` está funcionalmente roto** — Israel: «hay muchas cosas que se rompieron». No hay lista todavía. Ver [[project_ds_rates]].
+Todo esto está en `feature/staging` desde el **2026-09-04**. **Ninguno verificado en pantalla.**
+
+Los fallos de `ds-rates` que Israel reportó ya están cerrados — ver [[project_ds_rates]]. Los dos módulos nuevos, en [[project_ds_lodging]] y [[project_ds_spot_configuration]].
 
 **El alcance no tiene que ser el módulo entero.** Stations y tipping son «contenedores, diálogos y snackbar» por decisión suya, y salió bien: son módulos cortos y el riesgo se acota.
+
+**Patrón que ya se repite en los tres rebuilds completos:** el clásico siempre tiene un componente de alta y otro de edición duplicados línea por línea, y siempre colapsan en uno con `DIALOG_DATA`/input a `null`. Diez→cinco en rates, dos→uno en lodging, dos→uno en spot-configuration. Buscarlo primero al abrir un módulo nuevo.
+
+**Y otro:** cuando el clásico tiene N componentes casi idénticos que se diferencian en una variante del dominio (los cuatro layouts de spot-config, los cinco tipos de tarifa), suele haber una **tabla de datos** que los sustituye. `LAYOUT_SHAPE` es el ejemplo más limpio.
 
 ## El orden, por dependencia y no por tamaño
 

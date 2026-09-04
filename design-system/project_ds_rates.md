@@ -1,19 +1,28 @@
 ---
 name: project_ds_rates
-description: "ds-rates: el rebuild completo de rates sobre la lib — cómo quedó, los defectos del clásico que muere con él, y que está roto sin lista todavía"
+description: "ds-rates: el rebuild completo de rates sobre la lib — cómo quedó, los defectos del clásico que muere con él, y los cuatro fallos del rebuild ya corregidos"
 metadata:
   node_type: memory
   type: project
-  modified: 2026-09-03
+  modified: 2026-09-04
 ---
 
-Rama `feature/design-toggle` de `~/Dev/frontend-backoffice`, **sin empujar**. Ruta duplicada con `newDesignGuard`; `RatesComponent` clásico intacto.
+Rama `feature/design-toggle` de `~/Dev/frontend-backoffice`, **mergeada a `feature/staging` el 2026-09-04**. Ruta duplicada con `newDesignGuard`; `RatesComponent` clásico intacto.
 
-## ⚠️ Está roto
+## Los fallos del rebuild, corregidos el 2026-09-04
 
-Israel, el **2026-09-03**: «no hemos terminado con rates, hay muchas cosas que se rompieron». **No hay lista todavía.** Antes de tocar nada más aquí, pedirle qué falla — es el único que lo ha visto en pantalla.
+Israel el 2026-09-03 dijo «hay muchas cosas que se rompieron» sin lista. Los fue soltando de uno en uno; salieron todos del **diálogo de tarifa variable** y del **overnight**.
 
-Los dos defectos visuales que sí reportó y están arreglados:
+1. **La cadena de tramos solo corría al añadir o quitar.** Teclear el «To» nunca rellenaba el «From» del tramo siguiente — el clásico lo propagaba en vivo con `(ngModelChange)`. Ahora corre desde el `valueChanges` del `FormArray`, que cubre las tres vías.
+2. **El «Max» del último tramo quedaba editable y `required`.** El clásico lo deshabilita y lo vacía. Enabled hacía que **el Confirm naciera muerto al abrir una tarifa existente**, y al crear exigía un valor que luego se descartaba. Con eso se fue también un `clearValidators()` que dejaba sin `required` al tramo que dejaba de ser el último.
+3. **`#toMinutes` partía por `':'`.** Con `dropSpecialCharacters` activo la máscara se come el separador y `'2:30'` llega al control como `'230'`: **13 800 minutos en vez de 150**. La conversión vive ahora en `@utils/parked-time`, que lee las dos formas.
+4. **El overnight mandaba un solo campo de corte.** La API guarda `businessDayCutTime`, `checkInCutTime` y `cutTime` por separado y rechazaba con `INVALID-RATE-CONFIG-OVERNIGHT-06`, «must inform the cut times». El clásico manda los tres con el mismo valor.
+
+**Lo que dejó pasar el 4: `as never`.** `NewOvernightRate` ya declaraba los tres como `Required`, pero el payload entraba al servicio con ese cast y tiraba la única comprobación que había. Quitado de los tres diálogos que lo tenían (variable, temporary, overnight); ya no queda ninguno en `ds-rates`, y el build en verde **sin casts** es la prueba de que los payloads cuadran de verdad.
+
+**Layout:** la fila de tramos usaba `1fr` pelado. El `min-width: auto` implícito de los items de grid impide que la pista baje del ancho intrínseco del `<input>` (~180 px), así que tres campos más el botón desbordaban el diálogo con scroll horizontal. El clásico ya usaba `minmax(0, 1fr)` justo por esto.
+
+Los dos defectos visuales del 2026-09-03, también arreglados:
 1. **Cabecera duplicada.** Puse `data: { ownHeader: false }` *y* pinté mi propio `cp-page-header`. La bandera significa lo contrario de lo que creí: `app-layout.component.html` es `@if (heading() && !ownHeader())`, así que **`false` = la pinta el shell**. Sin bandera (default `true`) la pinta la página.
 2. **Heading invertido.** Puse la ubicación como título y «Rates» como subtítulo. Sale de la ruta, vía `TranslatedTitleStrategy.heading` / `.subheading`, y la ubicación **no** va en el texto — ya la nombra el `page-meta-row`.
 
@@ -42,9 +51,21 @@ Todos siguen vivos en `RatesComponent`, que es el que ve el diseño clásico:
 
 ## Piezas que se quitaron, no se portaron
 
-- **`variable-time`**, un popover de flechas arriba/abajo para poner horas y minutos. El campo tiene máscara, así que teclear `2:30` es toda la interacción; el stepper eran **48 clics** para llegar a 24:00.
-- **El `(ngModelChange)` por fila** que encadenaba los tramos. Un método reescribe la cadena al añadir o quitar, así que un cambio en medio no deja hueco.
 - **Los uuid de cliente** del formulario de comps: solo eran claves de `track` y nunca se enviaban.
+
+### `variable-time` se quitó y hubo que devolverlo
+
+**Corregido el 2026-09-04.** Esta memoria justificaba haberlo quitado con «el stepper eran 48 clics para llegar a 24:00». **Es falso**: las horas tenían su propio contador (24 clics) y los dos inputs del panel eran escribibles. Israel lo notó como regresión — «cuando estoy en el input to, no hace nada y antes desplegaba algo».
+
+Y no era un popover: su `:host` era `position: absolute; inset: 0` con fondo blanco, o sea **tapaba el diálogo entero**.
+
+Reconstruido como **`ds-duration-panel`**, con dos cambios deliberados:
+- **Overlay del CDK anclado al campo**, no una capa sobre todo el diálogo, así se ve el tramo que editas.
+- **Abre desde un botón propio, no al enfocar**, así el campo enmascarado sigue siendo tecleable. El panel es una alternativa, no un peaje.
+
+**No sirve `cp-time-field`** de la lib: es reloj de pared con AM/PM, y esto es una **duración** donde 26:00 es legítimo — el mismo razonamiento que ya está escrito para `ds-stay-time-fields`.
+
+Los contadores guardan **strings, no números**: ngx-mask escribe de vuelta lo que pintó, así que el `FormControl<number>` del clásico con `value + 1` concatena `'2'` en `'21'` en vez de contar a 3.
 
 ## Decisiones que conviene no revisitar
 
@@ -58,5 +79,6 @@ Todos siguen vivos en `RatesComponent`, que es el que ve el diseño clásico:
 - **`core/enums/api-error-code.ts`** — los 12 códigos del backend, que eran strings mágicos.
 - **`core/i18n/rates-i18n.ts`** y **`general-services-i18n.ts`** + los namespaces `RATES` y `GENERAL_SERVICES.ERROR` en `en`/`es`.
 - **`core/utils/rate-detail-fields.ts`** — la única parte pura de rates, con **34 tests** que **no pueden correr**: el BO no tiene runner instalado (ni vitest, ni karma, ni jasmine), y ya hay 10 `.spec.ts` en la misma situación.
+- **`core/utils/parked-time.ts`** (2026-09-04) — `parkedTimeToMinutes` / `minutesToParkedTime`, las dos formas del valor enmascarado. Lo usan el diálogo y el panel.
 
-Ver [[project_material_to_corepark_ui]] y [[project_bo_module_migration]].
+Ver [[project_material_to_corepark_ui]], [[project_bo_module_migration]], [[project_ds_lodging]] y [[project_ds_spot_configuration]].

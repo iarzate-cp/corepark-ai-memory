@@ -17,6 +17,21 @@ git switch -c feature/<short-desc>
 
 Prefijos: `feature/` · `fix/` · `chore/` · `docs/`, en minúsculas y kebab-case.
 
+**Crear la rama ANTES de tocar el primer archivo.** Los repos se encuentran parados en la rama que quedó de la última sesión, que muy seguido es `feature/staging`. Editar primero y ramificar después obliga a un `git stash` para reubicar el trabajo, y eso tiene dos costos reales:
+
+- El `pull --ff-only` **aborta** si hay cambios sin commitear, y como el exit status se pierde al pipear a `tail`, la cadena `switch && pull && switch -c` sigue corriendo y deja la rama nueva basada en un `main` viejo, en silencio.
+- Un `stash` guarda el diff **calculado contra el árbol donde se creó**. Al popearlo sobre otra base puede arrastrar contenido de la rama anterior sin conflicto visible.
+
+Ninguno de los dos se nota sin verificar. Si ya pasó, comprobar antes de seguir — no basta con recordar lo que se hizo:
+
+```bash
+[ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] && echo OK
+git merge-base --is-ancestor origin/feature/staging HEAD && echo "PROBLEMA: staging es ancestro"
+git diff --stat   # que solo aparezca lo que se tocó a propósito
+```
+
+Revisar también el `--stat` completo: cosas como un `chmod +x` hecho para diagnosticar se cuelan como cambio de permisos y no pertenecen al PR.
+
 **Consecuencia que hay que anticipar, no descubrir a medio merge:** las ramas de prueba tienen commits propios que `main` no tiene, y `main` tiene commits que ellas no tienen. Al mergear una rama nacida de `main` hacia la rama de prueba, viajan también los commits de `main` que faltaban ahí. Eso es correcto y deseable — la rama de prueba no debería correr sin un fix que ya está en producción — pero conviene revisar qué entra (`git log origin/<destino>..HEAD --oneline` y `git diff origin/<destino> --stat`) y avisarlo, porque no es parte del cambio propio.
 
 ## 2. La rama de ambiente de pruebas absorbe todo

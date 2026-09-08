@@ -1,3 +1,4 @@
+- [Never connect to the databases](feedback_never_connect_to_databases.md) — Prohibido abrir túneles SSM o correr `psql` contra DEV/PROD por iniciativa propia, incluso para leer. Pedírselo a Israel
 - [Branching model](feedback_branching_model.md) — Toda rama sale de `main`; `feature/staging` (o `develop`) es el ambiente de pruebas y absorbe todo; `main` solo por PR. Considerar AL EMPEZAR cualquier trabajo
 - [User speaks Spanish](user_language.md) — Respond in Spanish (Mexican); technical terms stay in English
 - [From-scratch preference](feedback_from_scratch_preference.md) — On his own libraries, avoid wrapping third-party deps; build from spec

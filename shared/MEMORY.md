@@ -4,3 +4,5 @@
 - [From-scratch preference](feedback_from_scratch_preference.md) — On his own libraries, avoid wrapping third-party deps; build from spec
 - [Coding style rules](feedback_coding_style.md) — Functional/declarative, no ternaries, `.at()` over `arr[n]`, early returns, no classes for stateless logic
 - [Filekit project](project_filekit.md) — Zero-deps TS library for XLSX generation + blob download at `/Users/israel/Dev/filekit/`
+- [Material nativo y sin ::ng-deep](feedback_material_native_no_ng_deep.md) — `::ng-deep` deprecado; overrides por design tokens o parcial global acotado; usar Material como viene antes que forzarlo
+- [Los datos se sacan de main](feedback_read_facts_from_main.md) — `feature/staging` tiene trabajo que nunca tocó producción; verificar qué existe contra `origin/main`

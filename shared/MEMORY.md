@@ -6,3 +6,5 @@
 - [Filekit project](project_filekit.md) — Zero-deps TS library for XLSX generation + blob download at `/Users/israel/Dev/filekit/`
 - [Material nativo y sin ::ng-deep](feedback_material_native_no_ng_deep.md) — `::ng-deep` deprecado; overrides por design tokens o parcial global acotado; usar Material como viene antes que forzarlo
 - [Los datos se sacan de main](feedback_read_facts_from_main.md) — `feature/staging` tiene trabajo que nunca tocó producción; verificar qué existe contra `origin/main`
+- [Trampas de pnpm 12](reference_pnpm_12_gotchas.md) — El self-update deja el binario nativo sin instalar; y `onlyBuiltDependencies` pasó a llamarse `allowBuilds` en `pnpm-workspace.yaml`
+- [Revisar el índice antes de commitear](feedback_check_index_before_commit.md) — `git commit` versiona todo el índice, no solo lo que acabas de añadir; vaciarlo antes de armar commits atómicos

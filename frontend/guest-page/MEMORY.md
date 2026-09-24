@@ -43,3 +43,4 @@
 - [Respuestas concisas](concise-answers.md) — Israel quiere respuestas cortas, no reportes largos
 - [Revisar el índice antes de commitear](feedback_check_index_before_commit.md) — commit versiona todo el índice, no solo lo añadido
 - [Trampas de pnpm 12](reference_pnpm_12_gotchas.md) — binario nativo ausente y `allowBuilds` en pnpm-workspace.yaml
+- [El repo de memoria es privado](feedback_ai_memory_repo_is_private.md) — corepark-ai-memory solo lo ve Israel; las credenciales ahí son intencionales

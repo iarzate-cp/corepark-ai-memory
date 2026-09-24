@@ -37,6 +37,9 @@
 - [Feature: captura de teléfono y expected departure en el gate de CoF](feature_unlock_guest_info.md) — Configurable por location vía el catálogo `custom.cat_screen` en vez de columnas; contrato de tz sin offset; por qué el hotel room viaja en el snapshot de Firebase; 5 repos en staging 2026-09-08, sin PR a main; `requireCardOnFile` pendiente
 - [Encontrar un ticket elegible a CoF en dev](reference_find_cof_eligible_ticket.md) — El gateway NO sale de `payment_gateway_location`; queries de elegibilidad; op 8 locations 5/12/16; ticket 3340311 con `hotel_room = 78` es el único que detecta la regresión del RTDB
 - [La suite de tests no corre](project_test_suite_unrunnable.md) — Falta `tsconfig.spec.json` desde marzo 2025 en main y staging; el build es la única verificación
-- [TRX integration status](project_trx_integration_status.md) — 2026-09-21: card flow done and merged to staging, never charged for real; Google Pay waits on one backend line, Apple Pay on the hostname decision; Card on File parked
+- [TRX integration status](project_trx_integration_status.md) — 2026-09-24: Apple Pay inside the dialog behind `trxApplePayVerified` (dev on, prod off), backend already sends ApplePay=1, testing in DEV first; TRX `.txt` and Square extensionless association files coexist
 - [TRX PayPage library](reference_trx_paypage_library.md) — Real script URL, the public test tool, and the four things the Integration Guide does not document (kebab-case field names, static initialize, nested Encrypted, silent session.errors)
 - [TRX integration plan](reference_trx_integration_plan_doc.md) — Jorge Valencia's artifact: the source of truth for what waits on whom
+- [Respuestas concisas](concise-answers.md) — Israel quiere respuestas cortas, no reportes largos
+- [Revisar el índice antes de commitear](feedback_check_index_before_commit.md) — commit versiona todo el índice, no solo lo añadido
+- [Trampas de pnpm 12](reference_pnpm_12_gotchas.md) — binario nativo ausente y `allowBuilds` en pnpm-workspace.yaml
